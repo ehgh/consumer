@@ -1,5 +1,10 @@
 library(igraph)
 library(plyr)
+library(poweRlaw)
+library(grid)
+library(Rmisc)
+library(lattice)
+library(ggplot2)
 
 
 #############################################################################################################
@@ -17,8 +22,8 @@ for (i in 2014:2014){
   assign(paste("purchases_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
 
-products1 <- read.table("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 4/HMS/Master_Files/Latest/products.tsv" , sep = "\t", quote = "", as.is = !StringsAsFactor, skipNul = TRUE)
-products1 <- read.table("~/Desktop/research/consumer data/nielsen_extracts/RMS/Master_Files/Latest/products.tsv" , header = TRUE, sep = "\t", quote = "", as.is = !StringsAsFactor, skipNul = TRUE)
+#products1 <- read.table("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 4/HMS/Master_Files/Latest/products.tsv" , sep = "\t", quote = "", as.is = !StringsAsFactor, skipNul = TRUE)
+#products1 <- read.table("~/Desktop/research/consumer data/nielsen_extracts/RMS/Master_Files/Latest/products.tsv" , header = TRUE, sep = "\t", quote = "", as.is = !StringsAsFactor, skipNul = TRUE)
 #############################################################################################################
 #combining trips and purchases
 for (i in 2014:2014){
@@ -63,17 +68,25 @@ for (store_code in store_code_list[1]){
   trip_code_list <- unique(eval(parse(text = paste(listname, "$trip_code_uc", sep = ""))))
   #parse by trip_code and then add edges from the parsed list  
   temp1 <- matrix(nrow = 0, ncol = 2)
-  for (trip in trip_code_list[1:2]){
-      temp <- eval(parse(text = paste(listname, "[", listname, "$trip_code_uc ==", trip, ",5]", sep = "")))
-     # temp1 <- t(combn(temp, 2, simplify = TRUE))
-      temp1 <- rbind(temp1, t(combn(temp, 2, simplify = TRUE)))
+  #split datasets based on trip_code_uc
+  temp <- split(eval(parse(text = listname)), f = eval(parse(text = paste(listname, "$trip_code_uc", sep = ""))))
+  #add edges to edgelist
+  for (trip in 1:length(trip_code_list)){
+      temp2 <- temp[[trip]]$upc_unique
+      if (length(temp2) > 1) {
+        temp1 <- rbind(temp1, t(combn(temp2, 2)))
+      }
   }
-  }
+  assign(paste(listname, "_edgelist", sep = "" ), as.data.frame(temp1))
+  assign(eval(parse(text = paste(listname, "_edgelist", sep = "" ))), transform( `colnames<-`(eval(parse(text = paste(listname, "_edgelist", sep = "" ))), c("Source","Target"))))
+  #create the graph
+  assign(paste(listname, "_graph", sep = "" ), graph.data.frame(eval(parse(text = paste(listname, "_edgelist", sep = "" ))), directed = FALSE))
+  rm(temp1)
+  rm(temp2)
+  rm(temp)
+}
 
 #############################################################################################################
-
-
-
 
 
 
