@@ -67,6 +67,7 @@ for (store_code in store_code_list){
   #filtering the store_code data
   listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, sep = "")
   assign(listname, eval(parse(text = paste("trips_purchases_zip_",i,"[trips_purchases_zip_",i,"$store_code_uc == ", store_code, ",]", sep = ""))))
+  ####should check if there is only one purchase with one product to continue to next store
   #create product graph edgelist
   #this line is not required!
   #trip_code_list <- unique(eval(parse(text = paste(listname, "$trip_code_uc", sep = ""))))
@@ -103,11 +104,11 @@ for (store_code in store_code_list){
   rm(temp1)
   rm(temp2)
   rm(temp)
-  #rm(listname)
+  rm(listname)
   listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, sep = "")
-  #rm(listname)
+  rm(listname)
   listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, "_graph", sep = "" )
-  #rm(listname)
+  rm(listname)
 }
 
 
