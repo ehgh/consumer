@@ -61,33 +61,56 @@ for (zip in 956){
 listname <- paste("trips_purchases_zip_",zip,"_", i,"$store_code_uc", sep = "")
 store_code_list <- unique(eval(parse(text = listname)))
 for (store_code in store_code_list[1]){
+  if (store_code%%10 == 0){
+    print(store_code)
+  }
   #filtering the store_code data
   listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, sep = "")
   assign(listname, eval(parse(text = paste("trips_purchases_zip_",i,"[trips_purchases_zip_",i,"$store_code_uc == ", store_code, ",]", sep = ""))))
   #create product graph edgelist
-  trip_code_list <- unique(eval(parse(text = paste(listname, "$trip_code_uc", sep = ""))))
+  #this line is not required!
+  #trip_code_list <- unique(eval(parse(text = paste(listname, "$trip_code_uc", sep = ""))))
   #parse by trip_code and then add edges from the parsed list  
   temp1 <- matrix(nrow = 0, ncol = 2)
   #split datasets based on trip_code_uc
   temp <- split(eval(parse(text = listname)), f = eval(parse(text = paste(listname, "$trip_code_uc", sep = ""))))
   #add edges to edgelist
-  for (trip in 1:length(trip_code_list)){
+  for (trip in 1:length(temp)){
       temp2 <- temp[[trip]]$upc_unique
       if (length(temp2) > 1) {
         temp1 <- rbind(temp1, t(combn(temp2, 2)))
       }
   }
-  assign(paste(listname, "_edgelist", sep = "" ), as.data.frame(temp1))
-  assign(eval(parse(text = paste(listname, "_edgelist", sep = "" ))), transform( `colnames<-`(eval(parse(text = paste(listname, "_edgelist", sep = "" ))), c("Source","Target"))))
+  listname <- paste(listname, "_edgelist", sep = "" )
+  #convert to data frame
+  assign(listname, as.data.frame(temp1))
+  #counting the number of duplicate rows as weight
+  temp <- ddply(eval(parse(text = listname)),.(V1,V2),nrow)
+  #rename column names to Source and Target to use in Gephi
+  eval(parse(text = paste("names(", listname, ") <- c('Source','Target') ", sep = "" )))
   #create the graph
-  assign(paste(listname, "_graph", sep = "" ), graph.data.frame(eval(parse(text = paste(listname, "_edgelist", sep = "" ))), directed = FALSE))
+  assign(paste(listname, "_graph", sep = "" ), graph.data.frame(eval(parse(text = listname)), directed = FALSE))
+  #assign weights of 1 to edges
+  eval(parse(text = paste("E(", listname, "_graph)$weight <- 1", sep = "" )))
+  #remove self edges and merge duplicate edges into weights
+  assign(paste(listname, "_graph", sep = "" ), simplify(eval(parse(text = paste(listname, "_graph", sep = "" ))), remove.loops = TRUE, edge.attr.comb=list(weight="sum")))
+  #convert graph into edgelist with weights
+  assign(listname, cbind(as_edgelist(eval(parse(text = paste(listname, "_graph", sep = "" ))), names = TRUE), E(eval(parse(text = paste(listname, "_graph", sep = "" ))))$weight))
+  temp10 <- cbind(as_edgelist(eval(parse(text = paste(listname, "_graph", sep = "" ))), names = TRUE), E(eval(parse(text = paste(listname, "_graph", sep = "" ))))$weight)
+  #address for the table to be written at
+  address <- paste("~/Desktop/research/consumer data/R files/zip 956 store resulotion graphs/", listname, ".tsv", sep = "")
+  write.table(eval(parse(text = listname)), address, row.names = FALSE, sep = ",")
+  #remove the created objects to free memory
   rm(temp1)
   rm(temp2)
   rm(temp)
+  rm(listname)
+  listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, sep = "")
+  rm(listname)
+  listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, "_graph", sep = "" )
+  rm(listname)
+  
 }
 
+
 #############################################################################################################
-
-
-
-
