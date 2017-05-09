@@ -60,7 +60,7 @@ for (zip in 956){
 #separating list based on store_code_uc
 listname <- paste("trips_purchases_zip_",zip,"_", i,"$store_code_uc", sep = "")
 store_code_list <- unique(eval(parse(text = listname)))
-for (store_code in store_code_list[1]){
+for (store_code in store_code_list){
   if (store_code%%10 == 0){
     print(store_code)
   }
@@ -93,9 +93,9 @@ for (store_code in store_code_list[1]){
   #remove self edges and merge duplicate edges into weights
   assign(paste(listname, "_graph", sep = "" ), simplify(eval(parse(text = paste(listname, "_graph", sep = "" ))), remove.loops = TRUE, edge.attr.comb=list(weight="sum")))
   #convert graph into edgelist with weights
-  assign(listname, cbind(as_edgelist(eval(parse(text = paste(listname, "_graph", sep = "" ))), names = TRUE), E(eval(parse(text = paste(listname, "_graph", sep = "" ))))$weight))
+  assign(listname, cbind(as_edgelist(eval(parse(text = paste(listname, "_graph", sep = "" ))), names = TRUE), E(eval(parse(text = paste(listname, "_graph", sep = "" ))))$weight, "Undirected"))
   #rename column names to Source and Target to use in Gephi
-  eval(parse(text = paste("names(", listname, ") <- c('Source','Target','weight') ", sep = "" )))
+  eval(parse(text = paste("colnames(", listname, ") <- c('Source','Target','Weight','Type') ", sep = "" )))
   #address for the table to be written at
   address <- paste("~/Desktop/research/consumer data/R files/zip 956 store resulotion graphs/", listname, ".tsv", sep = "")
   write.table(eval(parse(text = listname)), address, row.names = FALSE, sep = ",")
@@ -103,11 +103,11 @@ for (store_code in store_code_list[1]){
   rm(temp1)
   rm(temp2)
   rm(temp)
-  rm(listname)
+  #rm(listname)
   listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, sep = "")
-  rm(listname)
+  #rm(listname)
   listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, "_graph", sep = "" )
-  rm(listname)
+  #rm(listname)
 }
 
 
