@@ -60,14 +60,16 @@ for (zip in 956){
 #separating list based on store_code_uc
 listname <- paste("trips_purchases_zip_",zip,"_", i,"$store_code_uc", sep = "")
 store_code_list <- unique(eval(parse(text = listname)))
-for (store_code in store_code_list){
-  if (store_code%%10 == 0){
+for (store_code in store_code_list[1]){
+  if (which(store_code_list == store_code)%%10 == 0){
     print(store_code)
   }
   #filtering the store_code data
   listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, sep = "")
   assign(listname, eval(parse(text = paste("trips_purchases_zip_",i,"[trips_purchases_zip_",i,"$store_code_uc == ", store_code, ",]", sep = ""))))
-  ####should check if there is only one purchase with one product to continue to next store
+  #check if there is only one purchase with one product to continue to next store
+  if (length(eval(parse(text = listname)) == 1))
+    next
   #create product graph edgelist
   #this line is not required!
   #trip_code_list <- unique(eval(parse(text = paste(listname, "$trip_code_uc", sep = ""))))
@@ -104,12 +106,69 @@ for (store_code in store_code_list){
   rm(temp1)
   rm(temp2)
   rm(temp)
-  rm(listname)
+  listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, "_edgelist", sep = "")
+  rm(list = listname)
   listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, sep = "")
-  rm(listname)
-  listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, "_graph", sep = "" )
-  rm(listname)
+  rm(list = listname)
+  listname <- paste("trips_purchases_zip_",zip,"_store_",store_code,"_", i, "_edgelist_graph", sep = "" )
+  rm(list = listname)
+}
+#############################################################################################################
+#combining products and purchases
+for (i in 2014:2014){
+  #merging lists (Note: some trips may not include any purchases in the purchases list and here we exclude them to create products graph)
+  assign(paste("products_purchases_",i, sep = ""), merge(products, eval(parse(text = paste("purchases_", i, sep = ""))), by.x = c("upc","upc_ver_uc"), by.y = c("upc","upc_ver_uc"), all.x = FALSE, all.y = TRUE))
+  #counting the purchases in each product category/department/module and sort them
+  assign(paste("departments_",i, sep = ""), data.frame(sort(table(eval(parse(text = paste("products_purchases_",i, "$department_descr", sep = "")))), decreasing = TRUE)))
+  assign(paste("groups_",i, sep = ""), table(eval(parse(text = paste("products_purchases_",i, "$product_group_descr", sep = "")))))
+  assign(paste("modules_",i, sep = ""), table(eval(parse(text = paste("products_purchases_",i, "$product_module_descr", sep = "")))))
+  #plot ecdf of purchases per product department/module/group
+  department_plot =  
+    ggplot(eval(parse(text = paste("departments_",i, sep = ""))), aes(y = cumsum(Freq/sum(Freq)), x = Var1)) +
+    geom_step() +
+    geom_point() +
+    #ggplot(eval(parse(text = paste("products_purchases_",i, sep = ""))), aes(department_code)) +
+    #stat_ecdf() + 
+    # scale_x_log10() +
+    theme(axis.text.x = element_text(angle = -45,  vjust=1, hjust=1)) +
+    theme_bw() +
+    scale_y_continuous(limits = c(0,1)) +
+    #theme(legend.justification=c(1,0), legend.position=c(1,0)) +
+    # theme(legend.position = c(.25, .8)) +
+    xlab("department_code") +
+    ylab("CDF of purchases per product department")
+  department_plot
+  #assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = paste(upc, upc_ver_uc, sep = "")))
+  #assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = as.character(upc_unique)))
+  #assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = as.numeric(upc_unique)))
+  #assign(paste("trips_purchases_data_",i, sep = ""), eval(parse(text = paste("trips_purchases_",i, "[,c(1:9,12:16)]", sep = ""))))
+  #assign(paste("trips_purchases_data_",i, sep = ""), eval(parse(text = paste("trips_purchases_",i, "[,c(1:2,5,7,16)]", sep = ""))))
 }
 
 
+
+
+
+
+
+
+
+
 #############################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
