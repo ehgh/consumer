@@ -120,19 +120,22 @@ for (i in 2014:2014){
   assign(paste("products_purchases_",i, sep = ""), merge(products, eval(parse(text = paste("purchases_", i, sep = ""))), by.x = c("upc","upc_ver_uc"), by.y = c("upc","upc_ver_uc"), all.x = FALSE, all.y = TRUE))
   #counting the purchases in each product category/department/module and sort them
   assign(paste("departments_",i, sep = ""), data.frame(sort(table(eval(parse(text = paste("products_purchases_",i, "$department_descr", sep = "")))), decreasing = TRUE)))
+  assign(paste("groups_",i, sep = ""), data.frame(sort(table(eval(parse(text = paste("products_purchases_",i, "$product_group_descr", sep = "")))), decreasing = TRUE)))
+  assign(paste("modules_",i, sep = ""), data.frame(sort(table(eval(parse(text = paste("products_purchases_",i, "$product_module_descr", sep = "")))), decreasing = TRUE)))
   assign(paste("groups_",i, sep = ""), table(eval(parse(text = paste("products_purchases_",i, "$product_group_descr", sep = "")))))
   assign(paste("modules_",i, sep = ""), table(eval(parse(text = paste("products_purchases_",i, "$product_module_descr", sep = "")))))
   #plot ecdf of purchases per product department/module/group
   department_plot =  
-    ggplot(eval(parse(text = paste("departments_",i, sep = ""))), aes(y = cumsum(Freq/sum(Freq)), x = Var1)) +
+    ggplot(eval(parse(text = paste("departments_",i, sep = ""))), aes(y = cumsum(Freq/sum(Freq)), x = seq(1:length(Var1)))) +
     geom_step() +
-    geom_point() +
     #ggplot(eval(parse(text = paste("products_purchases_",i, sep = ""))), aes(department_code)) +
     #stat_ecdf() + 
     # scale_x_log10() +
     theme(axis.text.x = element_text(angle = -45,  vjust=1, hjust=1)) +
+    theme(axis.text.y = element_text(angle = -45,  vjust=1, hjust=1)) +
     theme_bw() +
     scale_y_continuous(limits = c(0,1)) +
+    scale_x_continuous(breaks = seq(1:length(eval(parse(text = paste("departments_",i,"$Var1", sep = ""))))),  labels = eval(parse(text = paste("departments_",i,"$Var1", sep = "")))) +
     #theme(legend.justification=c(1,0), legend.position=c(1,0)) +
     # theme(legend.position = c(.25, .8)) +
     xlab("department_code") +
