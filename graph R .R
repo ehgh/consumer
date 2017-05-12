@@ -200,13 +200,26 @@ for (i in 2011:2014){
 for (i in 2011:2014){
   assign(paste("trips_",i, sep = ""), eval(parse(text = paste("as.data.table(trips_", i, "[trips_", i, "$household_code %in% common_panelists,])", sep = ""))))
 }
+#filtering trips_purchases according to common panelists
+for (i in 2011:2012){
+  assign(paste("trips_purchases_",i, sep = ""), eval(parse(text = paste("as.data.table(trips_purchases_", i, "[trips_purchases_", i, "$household_code %in% common_panelists,])", sep = ""))))
+}
 #count the number of trips for each household and the amount of spendature per year for that household
 for (i in 2011:2014){
   assign(paste("trips_sum_",i, sep = ""), eval(parse(text = paste("trips_", i, "[,list(total = sum(total_spent), num = .N), by = household_code]", sep = ""))))
 }
+#count the average of quantities for each household and the amount of total coupon per year for that household
+for (i in 2011:2012){
+  assign(paste("trips_purchases_sum_",i, sep = ""), eval(parse(text = paste("trips_purchases_", i, "[,list(coupon = sum(coupon_value), quantity = mean(quantity)), by = household_code]", sep = ""))))
+}
+
 #merge trip_sums to calculate change in spendature
 assign("trips_sum_11_12", merge(eval(parse(text = paste("trips_sum_", "2011", sep = ""))), eval(parse(text = paste("trips_sum_", "2012", sep = ""))), by = "household_code",suffixes = c("2011","2012")))
 trips_sum_11_12$total_spent_change <- (trips_sum_11_12$total2012/trips_sum_11_12$num2012) - (trips_sum_11_12$total2011/trips_sum_11_12$num2011)
+#merge trip_purchases_sums to calculate change in coupon and quantity
+assign("trips_purchases_sum_11_12", merge(eval(parse(text = paste("trips_purchases_sum_", "2011", sep = ""))), eval(parse(text = paste("trips_purchases_sum_", "2012", sep = ""))), by = "household_code",suffixes = c("2011","2012")))
+trips_purchases_sum_11_12$quantity_change <- trips_purchases_sum_11_12$quantity2012 - trips_purchases_sum_11_12$quantity2011
+trips_purchases_sum_11_12$coupon_change <- trips_purchases_sum_11_12$coupon2012 - trips_purchases_sum_11_12$coupon2011
 #merge panelists to calculate change in employment status
 assign("panelists_13_14", merge(eval(parse(text = paste("panelists_", "2013", sep = ""))), eval(parse(text = paste("panelists_", "2014", sep = ""))), by = "household_code",suffixes = c("2013","2014")))
 assign("panelists_13_14", transform(eval(parse(text = "panelists_13_14")), employment = paste(male_head_employment2013, male_head_employment2014, female_head_employment2013, female_head_employment2014, sep = "")))
