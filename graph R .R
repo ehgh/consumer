@@ -9,7 +9,7 @@ library(data.table)
 
 #############################################################################################################
 #importin the files
-for (i in 2011:2013){
+for (i in 2011:2014){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/panelists_" , i, ".tsv", sep = "")
   assign(paste("panelists_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
@@ -166,16 +166,11 @@ for (i in 2014:2014){
   groups_plot =  
     ggplot(eval(parse(text = paste("groups_",i, sep = ""))), aes(y = cumsum(Freq/sum(Freq)), x = seq(1:length(Var1)))) +
     geom_step() +
-    #ggplot(eval(parse(text = paste("products_purchases_",i, sep = ""))), aes(department_code)) +
-    #stat_ecdf() + 
-    # scale_x_log10() +
     theme_bw() +
     theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
     theme(axis.title.y = element_text(size = 10)) +
     scale_y_continuous(limits = c(0,1)) +
     scale_x_continuous(breaks = eval(parse(text = "seq(from = 1, to = L , length.out = N)")),  labels = eval(parse(text = paste("groups_",i,"$Var1[seq(from = 1, to = L, length.out = N)]", sep = "")))) +
-    #theme(legend.justification=c(1,0), legend.position=c(1,0)) +
-    # theme(legend.position = c(.25, .8)) +
     xlab("product groups") +
     ylab("CDF of purchases\n per product groups") +
     ggtitle(paste("CDF of purchases per product groups\n ordered by highest contribution first for year ", i, sep = ""))
@@ -185,6 +180,13 @@ for (i in 2014:2014){
   dev.off()
 }
 #############################################################################################################
+#merge all different hours employment into 1 and remove families without male or female head
+for (i in 2011:2014){
+  assign(paste("panelists_",i, sep = ""), eval(parse(text = paste("panelists_", i, "[!(panelists_", i, "$male_head_employment == 0),]", sep = ""))))
+  eval(parse(text = paste("panelists_", i, "$male_head_employment[which(panelists_", i, "$male_head_employment == 2 | panelists_", i, "$male_head_employment == 3)] <- 1", sep = "")))
+  assign(paste("panelists_",i, sep = ""), eval(parse(text = paste("panelists_", i, "[!(panelists_", i, "$female_head_employment == 0),]", sep = ""))))
+  eval(parse(text = paste("panelists_", i, "$female_head_employment[which(panelists_", i, "$female_head_employment == 2 | panelists_", i, "$female_head_employment == 3)] <- 1", sep = "")))
+}
 #find common panelists throughout years
 common_panelists <- panelists_2011$household_code
 for (i in 2012:2014){
@@ -202,10 +204,37 @@ for (i in 2011:2014){
 for (i in 2011:2014){
   assign(paste("trips_sum_",i, sep = ""), eval(parse(text = paste("trips_", i, "[,list(total = sum(total_spent), num = .N), by = household_code]", sep = ""))))
 }
-#merge trip_sums to calculate change in spendature and employment status
-
-
-
+#merge trip_sums to calculate change in spendature
+assign("trips_sum_11_12", merge(eval(parse(text = paste("trips_sum_", "2011", sep = ""))), eval(parse(text = paste("trips_sum_", "2012", sep = ""))), by = "household_code",suffixes = c("2011","2012")))
+trips_sum_11_12$total_spent_change <- trips_sum_11_12$total2012 - trips_sum_11_12$total2011
+#merge panelists to calculate change in employment status
+assign("panelists_13_14", merge(eval(parse(text = paste("panelists_", "2013", sep = ""))), eval(parse(text = paste("panelists_", "2014", sep = ""))), by = "household_code",suffixes = c("2013","2014")))
+assign("panelists_13_14", transform(eval(parse(text = "panelists_13_14")), employment = paste(male_head_employment2013, male_head_employment2014, female_head_employment2013, female_head_employment2014, sep = "")))
+assign("panelists_13_14", transform(eval(parse(text = "panelists_13_14")), employment = as.character(employment)))
+assign("panelists_13_14", transform(eval(parse(text = "panelists_13_14")), employment = as.numeric(employment)))
+assign("panelists_13_14", eval(parse(text = paste("panelists_13_14[,c(1,116)]", sep = ""))))
+assign("trips_sum_11_12", eval(parse(text = paste("trips_sum_11_12[,c(1,6)]", sep = ""))))
+#merge change in spendature and change in employment into one dataframe
+assign("panelists_13_14", merge(eval(parse(text = "panelists_13_14")), eval(parse(text = "trips_sum_11_12")), by = "household_code"))
+#plot change in spendature for change in employment groups
+employment_plot =  
+  ggplot(eval(parse(text = "panelists_13_14")), aes(total_spent_change, color = employment)) +
+  stat_ecdf() +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
+  theme(axis.title.y = element_text(size = 10)) +
+  scale_y_continuous(limits = c(0,1)) +
+  theme(legend.justification=c(1,0), legend.position=c(1,0)) +
+  theme(legend.position = c(.25, .8)) +
+  scale_x_log10() +
+  xlab("product department") +
+  ylab("CDF of purchases\n per product department") +
+  ggtitle(paste("CDF of purchases per product department\n ordered by highest contribution first for year ", i, sep = ""))
+employment_plot
+address <- paste("~/Desktop/research/consumer data/plots/CDF_department_", i, ".pdf", sep = "")
+pdf(address, width=6, height=6)
+print(department_plot)
+dev.off()
 
 
 
