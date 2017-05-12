@@ -224,16 +224,15 @@ employment_plot =
   theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
   theme(axis.title.y = element_text(size = 10)) +
   scale_y_continuous(limits = c(0,1)) +
-  theme(legend.justification=c(1,0), legend.position=c(1,0)) +
-  theme(legend.position = c(.25, .8)) +
-  scale_x_log10() +
-  xlab("product department") +
-  ylab("CDF of purchases\n per product department") +
-  ggtitle(paste("CDF of purchases per product department\n ordered by highest contribution first for year ", i, sep = ""))
+  theme(legend.justification=c(0,1), legend.position=c(0,1)) +
+  scale_x_log10(limits = c(10,20000)) +
+  xlab("total spent change from 2013 to 2014") +
+  ylab("CDF") +
+  ggtitle(paste("CDF of total spent change from 2013 to 2014\n grouped by change in head emplyment\n status", "", sep = ""))
 employment_plot
-address <- paste("~/Desktop/research/consumer data/plots/CDF_department_", i, ".pdf", sep = "")
+address <- paste("~/Desktop/research/consumer data/plots/CDF_employment_", i, ".pdf", sep = "")
 pdf(address, width=6, height=6)
-print(department_plot)
+print(employment_plot)
 dev.off()
 
 
