@@ -5,15 +5,15 @@ library(grid)
 library(Rmisc)
 library(lattice)
 library(ggplot2)
-
+library(data.table)
 
 #############################################################################################################
 #importin the files
-for (i in 2014:2014){
+for (i in 2011:2013){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/panelists_" , i, ".tsv", sep = "")
   assign(paste("panelists_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
-for (i in 2014:2014){
+for (i in 2013:2013){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/trips_" , i, ".tsv", sep = "")
   assign(paste("trips_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
@@ -185,6 +185,26 @@ for (i in 2014:2014){
   dev.off()
 }
 #############################################################################################################
+#find common panelists throughout years
+common_panelists <- panelists_2011$household_code
+for (i in 2012:2014){
+  common_panelists <- intersect(common_panelists, eval(parse(text = paste("panelists_", i, "$household_code", sep = ""))))  
+}
+#filtering panelists according to common panelists
+for (i in 2011:2014){
+  assign(paste("panelists_",i, sep = ""), eval(parse(text = paste("panelists_", i, "[panelists_", i, "$household_code %in% common_panelists,]", sep = ""))))
+}
+#filtering trips according to common panelists
+for (i in 2011:2014){
+  assign(paste("trips_",i, sep = ""), eval(parse(text = paste("as.data.table(trips_", i, "[trips_", i, "$household_code %in% common_panelists,])", sep = ""))))
+}
+#count the number of trips for each household and the amount of spendature per year for that household
+for (i in 2011:2014){
+  assign(paste("trips_sum_",i, sep = ""), eval(parse(text = paste("trips_", i, "[,list(total = sum(total_spent), num = .N), by = household_code]", sep = ""))))
+}
+#merge trip_sums to calculate change in spendature and employment status
+
+
 
 
 
@@ -199,7 +219,7 @@ for (i in 2014:2014){
 #############################################################################################################
 
 
-
+gc()
 
 
 
