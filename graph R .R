@@ -13,11 +13,11 @@ for (i in 2011:2014){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/panelists_" , i, ".tsv", sep = "")
   assign(paste("panelists_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
-for (i in 2013:2013){
+for (i in 2007:2009){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/trips_" , i, ".tsv", sep = "")
   assign(paste("trips_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
-for (i in 2014:2014){
+for (i in 2011:2011){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/purchases_" , i, ".tsv", sep = "")
   assign(paste("purchases_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
@@ -26,15 +26,15 @@ for (i in 2014:2014){
 #products1 <- read.table("~/Desktop/research/consumer data/nielsen_extracts/RMS/Master_Files/Latest/products.tsv" , header = TRUE, sep = "\t", quote = "", as.is = !StringsAsFactor, skipNul = TRUE)
 #############################################################################################################
 #combining trips and purchases
-for (i in 2014:2014){
+for (i in 2011:2012){
   #merging lists (Note: some trips may not include any purchases in the purchases list and here we exclude them to create products graph)
   assign(paste("trips_purchases_",i, sep = ""), merge(eval(parse(text = paste("trips_", i, sep = ""))), eval(parse(text = paste("purchases_", i, sep = ""))), by.x = "trip_code_uc", by.y = "trip_code_uc", all.x = FALSE, all.y = TRUE))
   #combining upc+upc_ver_uc into upc_unique
-  assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = paste(upc, upc_ver_uc, sep = "")))
-  assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = as.character(upc_unique)))
-  assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = as.numeric(upc_unique)))
-  assign(paste("trips_purchases_data_",i, sep = ""), eval(parse(text = paste("trips_purchases_",i, "[,c(1:9,12:16)]", sep = ""))))
-  assign(paste("trips_purchases_data_",i, sep = ""), eval(parse(text = paste("trips_purchases_",i, "[,c(1:2,5,7,16)]", sep = ""))))
+  #assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = paste(upc, upc_ver_uc, sep = "")))
+  #assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = as.character(upc_unique)))
+  #assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = as.numeric(upc_unique)))
+  #assign(paste("trips_purchases_data_",i, sep = ""), eval(parse(text = paste("trips_purchases_",i, "[,c(1:9,12:16)]", sep = ""))))
+  #assign(paste("trips_purchases_data_",i, sep = ""), eval(parse(text = paste("trips_purchases_",i, "[,c(1:2,5,7,16)]", sep = ""))))
 }
 #############################################################################################################
 #calculating number of edges in products graph
@@ -206,7 +206,7 @@ for (i in 2011:2014){
 }
 #merge trip_sums to calculate change in spendature
 assign("trips_sum_11_12", merge(eval(parse(text = paste("trips_sum_", "2011", sep = ""))), eval(parse(text = paste("trips_sum_", "2012", sep = ""))), by = "household_code",suffixes = c("2011","2012")))
-trips_sum_11_12$total_spent_change <- trips_sum_11_12$total2012 - trips_sum_11_12$total2011
+trips_sum_11_12$total_spent_change <- (trips_sum_11_12$total2012/trips_sum_11_12$num2012) - (trips_sum_11_12$total2011/trips_sum_11_12$num2011)
 #merge panelists to calculate change in employment status
 assign("panelists_13_14", merge(eval(parse(text = paste("panelists_", "2013", sep = ""))), eval(parse(text = paste("panelists_", "2014", sep = ""))), by = "household_code",suffixes = c("2013","2014")))
 assign("panelists_13_14", transform(eval(parse(text = "panelists_13_14")), employment = paste(male_head_employment2013, male_head_employment2014, female_head_employment2013, female_head_employment2014, sep = "")))
@@ -216,28 +216,41 @@ assign("panelists_13_14", eval(parse(text = paste("panelists_13_14[,c(1,116)]", 
 assign("trips_sum_11_12", eval(parse(text = paste("trips_sum_11_12[,c(1,6)]", sep = ""))))
 #merge change in spendature and change in employment into one dataframe
 assign("panelists_13_14", merge(eval(parse(text = "panelists_13_14")), eval(parse(text = "trips_sum_11_12")), by = "household_code"))
+#separate files for change in employment of only male/female head
+apanelists_13_14 <-  panelists_13_14[which(panelists_13_14$employment %in% c("1111","1911","1999","9111","9199")),]
+apanelists_13_14 <-  panelists_13_14[which(panelists_13_14$employment %in% c("1111","1119","9919","1191","9991")),]
+table(apanelists_13_14$employment)
+
 #plot change in spendature for change in employment groups
 employment_plot =  
-  ggplot(eval(parse(text = "panelists_13_14")), aes(total_spent_change, color = employment)) +
+  ggplot(eval(parse(text = "apanelists_13_14")), aes(total_spent_change.y, color = employment, shape = employment)) +
   stat_ecdf() +
   theme_bw() +
   theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
   theme(axis.title.y = element_text(size = 10)) +
   scale_y_continuous(limits = c(0,1)) +
   theme(legend.justification=c(0,1), legend.position=c(0,1)) +
-  scale_x_log10(limits = c(10,20000)) +
-  xlab("total spent change from 2013 to 2014") +
+  scale_x_continuous(limits = c(-35,35)) +
+  xlab("average spent per trip change from 2013 to 2014") +
   ylab("CDF") +
-  ggtitle(paste("CDF of total spent change from 2013 to 2014\n grouped by change in head emplyment\n status", "", sep = ""))
+  ggtitle(paste("CDF of average spent per trip change from 2013 to 2014\n grouped by change in female head emplyment\n status", "", sep = ""))
 employment_plot
-address <- paste("~/Desktop/research/consumer data/plots/CDF_employment_", i, ".pdf", sep = "")
+address <- paste("~/Desktop/research/consumer data/plots/CDF_employment_per_trip_female_change_", i, ".pdf", sep = "")
 pdf(address, width=6, height=6)
 print(employment_plot)
 dev.off()
 
-
-
-
+panelists_2014_weka <- panelists_2014[,c(1,6,9,10,11,12,13,14,15)]
+panelists_2013_weka <- panelists_2013[,c(1,6,9,10,11,12,13,14,15)]
+write.csv(panelists_2013_weka, "~/Desktop/research/consumer data/weka files/panelists_2013_weka.csv", sep = ",", col.names = TRUE, row.names = FALSE)
+write.csv(panelists_2014_weka, "~/Desktop/research/consumer data/weka files/panelists_2014_weka.csv", sep = ",", col.names = TRUE, row.names = FALSE)
+w = cor(panelists_2014_weka, use = 'pairwise.complete.obs')
+w = cor(panelists_2014_weka)
+w[abs(w[,9]) > 0.3,9]
+w = cor(panelists_2013_weka, use = 'pairwise.complete.obs')
+w = cor(panelists_2013_weka)
+w[abs(w[,9]) > 0.1,9]
+w[,c(9,10)]
 
 
 
