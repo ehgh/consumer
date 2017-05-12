@@ -227,8 +227,10 @@ assign("panelists_13_14", transform(eval(parse(text = "panelists_13_14")), emplo
 assign("panelists_13_14", transform(eval(parse(text = "panelists_13_14")), employment = as.numeric(employment)))
 assign("panelists_13_14", eval(parse(text = paste("panelists_13_14[,c(1,116)]", sep = ""))))
 assign("trips_sum_11_12", eval(parse(text = paste("trips_sum_11_12[,c(1,6)]", sep = ""))))
+assign("trips_purchases_sum_11_12", eval(parse(text = paste("trips_purchases_sum_11_12[,c(1,6,7)]", sep = ""))))
 #merge change in spendature and change in employment into one dataframe
 assign("panelists_13_14", merge(eval(parse(text = "panelists_13_14")), eval(parse(text = "trips_sum_11_12")), by = "household_code"))
+assign("panelists_13_14", merge(eval(parse(text = "panelists_13_14")), eval(parse(text = "trips_purchases_sum_11_12")), by = "household_code"))
 #separate files for change in employment of only male/female head
 apanelists_13_14 <-  panelists_13_14[which(panelists_13_14$employment %in% c("1111","1911","1999","9111","9199")),]
 apanelists_13_14 <-  panelists_13_14[which(panelists_13_14$employment %in% c("1111","1119","9919","1191","9991")),]
@@ -236,22 +238,23 @@ table(apanelists_13_14$employment)
 
 #plot change in spendature for change in employment groups
 employment_plot =  
-  ggplot(eval(parse(text = "apanelists_13_14")), aes(total_spent_change.y, color = employment, shape = employment)) +
+  ggplot(eval(parse(text = "apanelists_13_14")), aes(quantity_change, color = employment)) +
   stat_ecdf() +
   theme_bw() +
   theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
   theme(axis.title.y = element_text(size = 10)) +
   scale_y_continuous(limits = c(0,1)) +
   theme(legend.justification=c(0,1), legend.position=c(0,1)) +
-  scale_x_continuous(limits = c(-35,35)) +
-  xlab("average spent per trip change from 2013 to 2014") +
+  scale_x_continuous(limits = c(-0.25,0.25)) +
+  xlab("average quantity change from 2011 to 2012") +
   ylab("CDF") +
-  ggtitle(paste("CDF of average spent per trip change from 2013 to 2014\n grouped by change in female head emplyment\n status", "", sep = ""))
+  ggtitle(paste("CDF of average quantity change from 2011 to 2012\n grouped by change in male head emplyment\n status", "", sep = ""))
 employment_plot
-address <- paste("~/Desktop/research/consumer data/plots/CDF_employment_per_trip_female_change_", i, ".pdf", sep = "")
+address <- paste("~/Desktop/research/consumer data/plots/CDF_employment_quantity_male_change_", i, ".pdf", sep = "")
 pdf(address, width=6, height=6)
 print(employment_plot)
 dev.off()
+rm(employment_plot)
 
 panelists_2014_weka <- panelists_2014[,c(1,6,9,10,11,12,13,14,15)]
 panelists_2013_weka <- panelists_2013[,c(1,6,9,10,11,12,13,14,15)]
@@ -264,7 +267,22 @@ w = cor(panelists_2013_weka, use = 'pairwise.complete.obs')
 w = cor(panelists_2013_weka)
 w[abs(w[,9]) > 0.1,9]
 w[,c(9,10)]
-
+#############################################################################################################
+#finding difference in product graph for different stores
+#importing the graphs
+#importin the files
+store_list_graph_stat <- as.data.frame(store_code_list)
+for (i in store_code_list[1:5]){
+  address <- paste("~/Desktop/research/consumer data/R files/zip 956 store resulotion graphs/trips_purchases_zip_956_store_", i, "_2014_edgelist.tsv" , sep = "")
+  assign(paste("trips_purchases_zip_956_store_", i, "_2014_edgelist", sep = ""), read.table(address, header = TRUE, sep = ","))
+  assign(paste("trips_purchases_zip_956_store_", i, "_2014_edgelist", sep = ""), as.data.frame(eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_edgelist[,1:3]", sep = "")))))
+  assign(paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = ""), graph.data.frame(eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_edgelist", sep = ""))), directed = FALSE))
+  rm(list = paste("trips_purchases_zip_956_store_", i, "_2014_edgelist", sep = ""))
+  store_list_graph_stat$vertices[store_list_graph_stat$store_code_list == i] = vcount(eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = ""))))
+  store_list_graph_stat$edges[store_list_graph_stat$store_code_list == i] = ecount(eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = ""))))
+  store_list_graph_stat$diff[store_list_graph_stat$store_code_list == i] = ecount(difference(trips_purchases_zip_956_store_821690_2014_graph,eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = "")))))/17283
+  
+}
 
 
 
