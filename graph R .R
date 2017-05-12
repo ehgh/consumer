@@ -128,25 +128,64 @@ for (i in 2014:2014){
   department_plot =  
     ggplot(eval(parse(text = paste("departments_",i, sep = ""))), aes(y = cumsum(Freq/sum(Freq)), x = seq(1:length(Var1)))) +
     geom_step() +
+    theme_bw() +
+    theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
+    theme(axis.title.y = element_text(size = 10)) +
+    scale_y_continuous(limits = c(0,1)) +
+    scale_x_continuous(breaks = seq(1:length(eval(parse(text = paste("departments_",i,"$Var1", sep = ""))))),  labels = eval(parse(text = paste("departments_",i,"$Var1", sep = "")))) +
+    xlab("product department") +
+    ylab("CDF of purchases\n per product department") +
+    ggtitle(paste("CDF of purchases per product department\n ordered by highest contribution first for year ", i, sep = ""))
+  address <- paste("~/Desktop/research/consumer data/plots/CDF_department_", i, ".pdf", sep = "")
+  pdf(address, width=6, height=6)
+  print(department_plot)
+  dev.off()
+  
+  L <- length(eval(parse(text = paste("modules_",i,"$Var1", sep = ""))))
+  #Number of the points to be shown on x axis
+  N <- 30
+  modules_plot =  
+    ggplot(eval(parse(text = paste("modules_",i, sep = ""))), aes(y = cumsum(Freq/sum(Freq)), x = seq(1:length(Var1)))) +
+    geom_step() +
+    theme_bw() +
+    theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
+    theme(axis.title.y = element_text(size = 10)) +
+    scale_y_continuous(limits = c(0,1)) +
+    scale_x_continuous(breaks = eval(parse(text = "seq(from = 1, to = L , length.out = N)")),  labels = eval(parse(text = paste("modules_",i,"$Var1[seq(from = 1, to = L, length.out = N)]", sep = "")))) +
+    xlab("product modules") +
+    ylab("CDF of purchases\n per product modules") +
+    ggtitle(paste("CDF of purchases per product modules\n ordered by highest contribution first for year ", i, sep = ""))
+  address <- paste("~/Desktop/research/consumer data/plots/CDF_modules_", i, ".pdf", sep = "")
+  pdf(address, width=6, height=6)
+  print(modules_plot)
+  dev.off()
+  
+  L <- length(eval(parse(text = paste("groups_",i,"$Var1", sep = ""))))
+  #Number of the points to be shown on x axis
+  N <- 30
+  groups_plot =  
+    ggplot(eval(parse(text = paste("groups_",i, sep = ""))), aes(y = cumsum(Freq/sum(Freq)), x = seq(1:length(Var1)))) +
+    geom_step() +
     #ggplot(eval(parse(text = paste("products_purchases_",i, sep = ""))), aes(department_code)) +
     #stat_ecdf() + 
     # scale_x_log10() +
-    theme(axis.text.x = element_text(angle = -45,  vjust=1, hjust=1)) +
-    theme(axis.text.y = element_text(angle = -45,  vjust=1, hjust=1)) +
     theme_bw() +
+    theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
+    theme(axis.title.y = element_text(size = 10)) +
     scale_y_continuous(limits = c(0,1)) +
-    scale_x_continuous(breaks = seq(1:length(eval(parse(text = paste("departments_",i,"$Var1", sep = ""))))),  labels = eval(parse(text = paste("departments_",i,"$Var1", sep = "")))) +
+    scale_x_continuous(breaks = eval(parse(text = "seq(from = 1, to = L , length.out = N)")),  labels = eval(parse(text = paste("groups_",i,"$Var1[seq(from = 1, to = L, length.out = N)]", sep = "")))) +
     #theme(legend.justification=c(1,0), legend.position=c(1,0)) +
     # theme(legend.position = c(.25, .8)) +
-    xlab("department_code") +
-    ylab("CDF of purchases per product department")
-  department_plot
-  #assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = paste(upc, upc_ver_uc, sep = "")))
-  #assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = as.character(upc_unique)))
-  #assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = as.numeric(upc_unique)))
-  #assign(paste("trips_purchases_data_",i, sep = ""), eval(parse(text = paste("trips_purchases_",i, "[,c(1:9,12:16)]", sep = ""))))
-  #assign(paste("trips_purchases_data_",i, sep = ""), eval(parse(text = paste("trips_purchases_",i, "[,c(1:2,5,7,16)]", sep = ""))))
+    xlab("product groups") +
+    ylab("CDF of purchases\n per product groups") +
+    ggtitle(paste("CDF of purchases per product groups\n ordered by highest contribution first for year ", i, sep = ""))
+  address <- paste("~/Desktop/research/consumer data/plots/CDF_groups_", i, ".pdf", sep = "")
+  pdf(address, width=6, height=6)
+  print(groups_plot)
+  dev.off()
 }
+#############################################################################################################
+
 
 
 
