@@ -9,15 +9,15 @@ library(data.table)
 
 #############################################################################################################
 #importin the files
-for (i in 2011:2014){
+for (i in 2011:2013){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/panelists_" , i, ".tsv", sep = "")
   assign(paste("panelists_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
-for (i in 2007:2009){
+for (i in 2011:2014){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/trips_" , i, ".tsv", sep = "")
   assign(paste("trips_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
-for (i in 2011:2011){
+for (i in 2011:2012){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/purchases_" , i, ".tsv", sep = "")
   assign(paste("purchases_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
@@ -128,16 +128,17 @@ for (i in 2014:2014){
   department_plot =  
     ggplot(eval(parse(text = paste("departments_",i, sep = ""))), aes(y = cumsum(Freq/sum(Freq)), x = seq(1:length(Var1)))) +
     geom_step() +
+    geom_segment(aes(x = 0.2*10, y = 0.1, xend = 0.2*10, yend = 0.9), color = "red") +
     theme_bw() +
-    theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
-    theme(axis.title.y = element_text(size = 10)) +
-    scale_y_continuous(limits = c(0,1)) +
+    theme(axis.text.x = element_text(size = 10, angle = 45,  vjust=1, hjust=1),axis.text.y = element_text(size = 13)) +
+    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15)) +
+    scale_y_continuous(limits = c(0,1), breaks = seq(0,1,length.out = 6)) +
     scale_x_continuous(breaks = seq(1:length(eval(parse(text = paste("departments_",i,"$Var1", sep = ""))))),  labels = eval(parse(text = paste("departments_",i,"$Var1", sep = "")))) +
-    xlab("product department") +
-    ylab("CDF of purchases\n per product department") +
-    ggtitle(paste("CDF of purchases per product department\n ordered by highest contribution first for year ", i, sep = ""))
+    #ggtitle(paste("Cumulative distribution of purchases per product departments\n ordered by contribution in year ", i, sep = ""))
+    xlab("Product departments ordered by highest contribution first") +
+    ylab("Cumulative distribution of purchases\n per product departments")
   address <- paste("~/Desktop/research/consumer data/plots/CDF_department_", i, ".pdf", sep = "")
-  pdf(address, width=6, height=6)
+  pdf(address, width=6.5, height=6)
   print(department_plot)
   dev.off()
   
@@ -147,14 +148,18 @@ for (i in 2014:2014){
   modules_plot =  
     ggplot(eval(parse(text = paste("modules_",i, sep = ""))), aes(y = cumsum(Freq/sum(Freq)), x = seq(1:length(Var1)))) +
     geom_step() +
+    geom_segment(aes(x = 0.2*L, y = 0.1, xend = 0.2*L, yend = 0.9), color = "red") +
     theme_bw() +
-    theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
-    theme(axis.title.y = element_text(size = 10)) +
-    scale_y_continuous(limits = c(0,1)) +
-    scale_x_continuous(breaks = eval(parse(text = "seq(from = 1, to = L , length.out = N)")),  labels = eval(parse(text = paste("modules_",i,"$Var1[seq(from = 1, to = L, length.out = N)]", sep = "")))) +
-    xlab("product modules") +
-    ylab("CDF of purchases\n per product modules") +
-    ggtitle(paste("CDF of purchases per product modules\n ordered by highest contribution first for year ", i, sep = ""))
+    theme(axis.text.x = element_text(size = 10, angle = 45,  vjust=1, hjust=1),axis.text.y = element_text(size = 13)) +
+    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15)) +
+    scale_y_continuous(limits = c(0,1), breaks = seq(0,1,length.out = 6)) +
+    #labeling the x-axis by sampled modules
+    #scale_x_continuous(breaks = eval(parse(text = "seq(from = 1, to = L , length.out = N)")),  labels = eval(parse(text = paste("modules_",i,"$Var1[seq(from = 1, to = L, length.out = N)]", sep = "")))) +
+    #labeling the x-axis by normalized interval [0,1]
+    scale_x_continuous(breaks = eval(parse(text = "seq(from = 1, to = L , length.out = N)")),  labels = round(seq(0,L,length.out = N), digits = 0)) +
+    #ggtitle(paste("Cumulative distribution of purchases per product modules\n ordered by contribution in year ", i, sep = ""))
+    xlab("Product modules ordered by highest contribution first") +
+    ylab("Cumulative distribution of purchases per product modules")
   address <- paste("~/Desktop/research/consumer data/plots/CDF_modules_", i, ".pdf", sep = "")
   pdf(address, width=6, height=6)
   print(modules_plot)
@@ -166,14 +171,18 @@ for (i in 2014:2014){
   groups_plot =  
     ggplot(eval(parse(text = paste("groups_",i, sep = ""))), aes(y = cumsum(Freq/sum(Freq)), x = seq(1:length(Var1)))) +
     geom_step() +
+    geom_segment(aes(x = 0.2*L, y = 0.1, xend = 0.2*L, yend = 0.9), color = "red") +
     theme_bw() +
-    theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
-    theme(axis.title.y = element_text(size = 10)) +
-    scale_y_continuous(limits = c(0,1)) +
-    scale_x_continuous(breaks = eval(parse(text = "seq(from = 1, to = L , length.out = N)")),  labels = eval(parse(text = paste("groups_",i,"$Var1[seq(from = 1, to = L, length.out = N)]", sep = "")))) +
-    xlab("product groups") +
-    ylab("CDF of purchases\n per product groups") +
-    ggtitle(paste("CDF of purchases per product groups\n ordered by highest contribution first for year ", i, sep = ""))
+    theme(axis.text.x = element_text(size = 10, angle = 45,  vjust=1, hjust=1),axis.text.y = element_text(size = 13)) +
+    theme(axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15)) +
+    scale_y_continuous(limits = c(0,1), breaks = seq(0,1,length.out = 6)) +
+    #labeling the x-axis by sampled groups
+    #scale_x_continuous(breaks = eval(parse(text = "seq(from = 1, to = L , length.out = N)")),  labels = eval(parse(text = paste("groups_",i,"$Var1[seq(from = 1, to = L, length.out = N)]", sep = "")))) +
+    #labeling the x-axis by normalized interval [0,1]
+    scale_x_continuous(breaks = eval(parse(text = "seq(from = 1, to = L , length.out = N)")),  labels = round(seq(0,L,length.out = N), digits = 0)) +
+    #ggtitle(paste("Cumulative distribution of purchases per product groups\n ordered by contribution in year ", i, sep = ""))
+    xlab("Product groups ordered by highest contribution first") +
+    ylab("Cumulative distribution of purchases per product groups")
   address <- paste("~/Desktop/research/consumer data/plots/CDF_groups_", i, ".pdf", sep = "")
   pdf(address, width=6, height=6)
   print(groups_plot)
@@ -236,9 +245,9 @@ apanelists_13_14 <-  panelists_13_14[which(panelists_13_14$employment %in% c("11
 apanelists_13_14 <-  panelists_13_14[which(panelists_13_14$employment %in% c("1111","1119","9919","1191","9991")),]
 table(apanelists_13_14$employment)
 
-#plot change in spendature for change in employment groups
+#plot change in purchasin quantity for change in employment groups
 employment_plot =  
-  ggplot(eval(parse(text = "apanelists_13_14")), aes(quantity_change, color = employment)) +
+  ggplot(panelists_13_14, aes(quantity_change, color = employment)) +
   stat_ecdf() +
   theme_bw() +
   theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
@@ -250,12 +259,31 @@ employment_plot =
   ylab("CDF") +
   ggtitle(paste("CDF of average quantity change from 2011 to 2012\n grouped by change in male head emplyment\n status", "", sep = ""))
 employment_plot
-address <- paste("~/Desktop/research/consumer data/plots/CDF_employment_quantity_male_change_", i, ".pdf", sep = "")
+address <- paste("~/Desktop/research/consumer data/plots/CDF_employment_quantity_male_change1_", i, ".pdf", sep = "")
 pdf(address, width=6, height=6)
 print(employment_plot)
 dev.off()
 rm(employment_plot)
 
+#plot change in expenditure for change in employment groups
+employment_plot =  
+  ggplot(panelists_13_14, aes(total_spent_change, color = employment)) +
+  stat_ecdf() +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
+  theme(axis.title.y = element_text(size = 10)) +
+  scale_y_continuous(limits = c(0,1)) +
+  theme(legend.justification=c(0,1), legend.position=c(0,1)) +
+  #scale_x_continuous(limits = c(-0.25,0.25)) +
+  xlab("Total expenditure change from 2011 to 2012") +
+  ylab("CDF") +
+  ggtitle(paste("CDF of total expenditure change from 2011 to 2012\n grouped by change in male head emplyment\n status", "", sep = ""))
+employment_plot
+address <- paste("~/Desktop/research/consumer data/plots/CDF_employment_total_spent_male_change1_", i, ".pdf", sep = "")
+pdf(address, width=6, height=6)
+print(employment_plot)
+dev.off()
+rm(employment_plot)
 panelists_2014_weka <- panelists_2014[,c(1,6,9,10,11,12,13,14,15)]
 panelists_2013_weka <- panelists_2013[,c(1,6,9,10,11,12,13,14,15)]
 write.csv(panelists_2013_weka, "~/Desktop/research/consumer data/weka files/panelists_2013_weka.csv", sep = ",", col.names = TRUE, row.names = FALSE)
@@ -263,6 +291,7 @@ write.csv(panelists_2014_weka, "~/Desktop/research/consumer data/weka files/pane
 w = cor(panelists_2014_weka, use = 'pairwise.complete.obs')
 w = cor(panelists_2014_weka)
 w[abs(w[,9]) > 0.3,9]
+w[abs(w) > 0.5 & w < 1]
 w = cor(panelists_2013_weka, use = 'pairwise.complete.obs')
 w = cor(panelists_2013_weka)
 w[abs(w[,9]) > 0.1,9]
@@ -271,8 +300,8 @@ w[,c(9,10)]
 #finding difference in product graph for different stores
 #importing the graphs
 #importin the files
-store_list_graph_stat <- as.data.frame(store_code_list)
-for (i in store_code_list[1:5]){
+store_list_graph_stat <- as.data.frame(store_code_list[1:215])
+for (i in store_code_list[1:215]){
   address <- paste("~/Desktop/research/consumer data/R files/zip 956 store resulotion graphs/trips_purchases_zip_956_store_", i, "_2014_edgelist.tsv" , sep = "")
   assign(paste("trips_purchases_zip_956_store_", i, "_2014_edgelist", sep = ""), read.table(address, header = TRUE, sep = ","))
   assign(paste("trips_purchases_zip_956_store_", i, "_2014_edgelist", sep = ""), as.data.frame(eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_edgelist[,1:3]", sep = "")))))
@@ -281,12 +310,22 @@ for (i in store_code_list[1:5]){
   store_list_graph_stat$vertices[store_list_graph_stat$store_code_list == i] = vcount(eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = ""))))
   store_list_graph_stat$edges[store_list_graph_stat$store_code_list == i] = ecount(eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = ""))))
   store_list_graph_stat$diff[store_list_graph_stat$store_code_list == i] = ecount(difference(trips_purchases_zip_956_store_821690_2014_graph,eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = "")))))/17283
-  
 }
 
+store_list_graph_stat_all <- matrix(nrow = 215, ncol = 215)
+for(i in 1:215){
+  for(j in c(1:215)){
+    store_list_graph_stat_all[i,j] = ecount(difference(eval(parse(text = paste("trips_purchases_zip_956_store_", store_code_list[i], "_2014_graph", sep = ""))),eval(parse(text = paste("trips_purchases_zip_956_store_", store_code_list[j], "_2014_graph", sep = "")))))/store_list_graph_stat$edges[i]
+  }
+  print(i)
+}
+store_list_graph_CC <- matrix(nrow = 215, ncol = 1)
 
-
-
+for(j in c(1:215)){
+  store_list_graph_CC[j] = transitivity(eval(parse(text = paste("trips_purchases_zip_956_store_", store_code_list[i], "_2014_graph", sep = ""))))
+}
+ggplot(data = as.data.frame(table(store_list_graph_stat_all1)), aes(x = Var1)) + geom_histogram(aes(y = ..count..))
+ggplot(data = as.data.frame(table(store_list_graph_CC)), aes(x = Var1)) + geom_histogram(aes(y = ..count..))
 
 #############################################################################################################
 
