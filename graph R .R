@@ -8,16 +8,16 @@ library(ggplot2)
 library(data.table)
 
 #############################################################################################################
-#importin the files
-for (i in 2011:2013){
+#importing the files
+for (i in 2014:2014){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/panelists_" , i, ".tsv", sep = "")
   assign(paste("panelists_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
-for (i in 2011:2014){
+for (i in 2014:2014){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/trips_" , i, ".tsv", sep = "")
   assign(paste("trips_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
-for (i in 2011:2012){
+for (i in 2014:2014){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/purchases_" , i, ".tsv", sep = "")
   assign(paste("purchases_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
@@ -26,13 +26,13 @@ for (i in 2011:2012){
 #products1 <- read.table("~/Desktop/research/consumer data/nielsen_extracts/RMS/Master_Files/Latest/products.tsv" , header = TRUE, sep = "\t", quote = "", as.is = !StringsAsFactor, skipNul = TRUE)
 #############################################################################################################
 #combining trips and purchases
-for (i in 2011:2012){
+for (i in 2014:2014){
   #merging lists (Note: some trips may not include any purchases in the purchases list and here we exclude them to create products graph)
   assign(paste("trips_purchases_",i, sep = ""), merge(eval(parse(text = paste("trips_", i, sep = ""))), eval(parse(text = paste("purchases_", i, sep = ""))), by.x = "trip_code_uc", by.y = "trip_code_uc", all.x = FALSE, all.y = TRUE))
   #combining upc+upc_ver_uc into upc_unique
-  #assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = paste(upc, upc_ver_uc, sep = "")))
-  #assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = as.character(upc_unique)))
-  #assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = as.numeric(upc_unique)))
+  assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = paste(upc, upc_ver_uc, sep = "")))
+  assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = as.character(upc_unique)))
+  assign(paste("trips_purchases_",i, sep = ""), transform(eval(parse(text = paste("trips_purchases_", i, sep = ""))), upc_unique = as.numeric(upc_unique)))
   #assign(paste("trips_purchases_data_",i, sep = ""), eval(parse(text = paste("trips_purchases_",i, "[,c(1:9,12:16)]", sep = ""))))
   #assign(paste("trips_purchases_data_",i, sep = ""), eval(parse(text = paste("trips_purchases_",i, "[,c(1:2,5,7,16)]", sep = ""))))
 }
@@ -245,9 +245,10 @@ apanelists_13_14 <-  panelists_13_14[which(panelists_13_14$employment %in% c("11
 apanelists_13_14 <-  panelists_13_14[which(panelists_13_14$employment %in% c("1111","1119","9919","1191","9991")),]
 table(apanelists_13_14$employment)
 
+apanelists_13_14 <- as.table(apanelists_13_14)
 #plot change in purchasin quantity for change in employment groups
 employment_plot =  
-  ggplot(panelists_13_14, aes(quantity_change, color = employment)) +
+  ggplot(apanelists_13_14, aes(x = quantity_change, color = household_code)) +
   stat_ecdf() +
   theme_bw() +
   theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
@@ -255,7 +256,7 @@ employment_plot =
   scale_y_continuous(limits = c(0,1)) +
   theme(legend.justification=c(0,1), legend.position=c(0,1)) +
   scale_x_continuous(limits = c(-0.25,0.25)) +
-  xlab("average quantity change from 2011 to 2012") +
+  xlab("Average quantity change from 2011 to 2012") +
   ylab("CDF") +
   ggtitle(paste("CDF of average quantity change from 2011 to 2012\n grouped by change in male head emplyment\n status", "", sep = ""))
 employment_plot
@@ -284,6 +285,7 @@ pdf(address, width=6, height=6)
 print(employment_plot)
 dev.off()
 rm(employment_plot)
+panelists_2014_weka <- panelists_2014[,c(5,8,10:17,20,23,26)]
 panelists_2014_weka <- panelists_2014[,c(1,6,9,10,11,12,13,14,15)]
 panelists_2013_weka <- panelists_2013[,c(1,6,9,10,11,12,13,14,15)]
 write.csv(panelists_2013_weka, "~/Desktop/research/consumer data/weka files/panelists_2013_weka.csv", sep = ",", col.names = TRUE, row.names = FALSE)
@@ -299,9 +301,10 @@ w[,c(9,10)]
 #############################################################################################################
 #finding difference in product graph for different stores
 #importing the graphs
-#importin the files
+#importing the files
 store_list_graph_stat <- as.data.frame(store_code_list[1:215])
-for (i in store_code_list[1:215]){
+#for (i in store_code_list[1:215]){
+for (i in c(2073128)){
   address <- paste("~/Desktop/research/consumer data/R files/zip 956 store resulotion graphs/trips_purchases_zip_956_store_", i, "_2014_edgelist.tsv" , sep = "")
   assign(paste("trips_purchases_zip_956_store_", i, "_2014_edgelist", sep = ""), read.table(address, header = TRUE, sep = ","))
   assign(paste("trips_purchases_zip_956_store_", i, "_2014_edgelist", sep = ""), as.data.frame(eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_edgelist[,1:3]", sep = "")))))
@@ -328,7 +331,87 @@ ggplot(data = as.data.frame(table(store_list_graph_stat_all1)), aes(x = Var1)) +
 ggplot(data = as.data.frame(table(store_list_graph_CC)), aes(x = Var1)) + geom_histogram(aes(y = ..count..))
 
 #############################################################################################################
+#combining upc and upc)ver)uc in products list
+products1 <-products
+assign("products1", transform(products1, upc_unique = paste(upc, upc_ver_uc, sep = "")))
+assign("products1", transform(products1, upc_unique = as.character(upc_unique)))
+assign("products1", transform(products1, upc_unique = as.numeric(upc_unique)))
+#measuring the centrality of nodes in product graph
+graph <- eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = "")))
+store_betweenness <- betweenness(graph, v = V(graph), directed = FALSE, weights = E(graph)$weight)
+top_between <- products1[products1$upc_unique %in% names(tail(sort(store_betweenness),10)),]
+store_degree <- strength(graph, v = V(graph), weights = E(graph)$weight)
+top_degree <- products1[products1$upc_unique %in% names(tail(sort(store_degree),10)),]
+store_closeness <- closeness(graph, v = V(graph), weights = E(graph)$weight)
+top_closeness <- products1[products1$upc_unique %in% names(tail(sort(store_closeness),10)),]
+store_page_rank <- page_rank(graph, v = V(graph), directed = FALSE, weights = E(graph)$weight)
+top_page_rank <- products1[products1$upc_unique %in% names(tail(sort(store_page_rank$vector),10)),]
+#store_ <- (graph, v = V(graph), weights = E(graph)$weight)
+#top_ <- products1[products1$upc_unique %in% names(tail(sort(store_),10)),]
 
+
+#############################################################################################################
+#creating the bipartite household product graph
+#############################################################################################################
+#applying pareto rule..keeping top 20% of modules
+assign(paste("modules_",i, sep = ""), data.frame(sort(table(eval(parse(text = paste("products_purchases_",i, "$product_module_code", sep = "")))), decreasing = TRUE)))
+L <- length(eval(parse(text = paste("modules_",i,"$Freq", sep = ""))))
+assign(paste("modules_",i,"_20P", sep = ""), eval(parse(text = paste("modules_",i, "[floor(0.2*L):floor(0.21*L),]", sep = ""))))
+assign(paste("Products_",i,"_20P", sep = ""), eval(parse(text = paste("products[products$product_module_code %in% modules_",i,"_20P$Var1 ,c(1:3,5)]", sep = ""))))
+assign(paste("Products_",i,"_20P", sep = ""), transform(eval(parse(text = paste("Products_",i,"_20P", sep = ""))), upc_unique = paste(upc, upc_ver_uc, sep = "")))
+assign(paste("Products_",i,"_20P", sep = ""), transform(eval(parse(text = paste("Products_",i,"_20P", sep = ""))), upc_unique = as.character(upc_unique)))
+assign(paste("Products_",i,"_20P", sep = ""), transform(eval(parse(text = paste("Products_",i,"_20P", sep = ""))), upc_unique = as.numeric(upc_unique)))
+assign(paste("trips_purchases_",i,"_20P", sep = ""), eval(parse(text = paste("trips_purchases_",i,"[trips_purchases_",i,"$upc_unique %in% Products_",i,"_20P$upc_unique ,]", sep = ""))))
+
+household_rand <- unique(trips_purchases_2014_20P$household_code)
+household_rand <- household_rand[1:3]
+assign(paste("trips_purchases_",i,"_20P1", sep = ""), eval(parse(text = paste("trips_purchases_",i,"_20P[trips_purchases_",i,"_20P$household_code %in% household_rand,]", sep = ""))))
+
+
+assign(paste("household_product_",i, sep = ""), eval(parse(text = paste("trips_purchases_",i,"_20P1[,c(2,16)]", sep = ""))))
+assign(paste("household_product_",i, sep = ""), eval(parse(text = paste("ddply(household_product_",i,",.(household_code, upc_unique),nrow)", sep = ""))))
+#assign(paste("household_product_",i, sep = ""), eval(parse(text = paste("sapply(household_product_",i,",as.character)", sep = ""))))
+assign(paste("household_store_",i, sep = ""), eval(parse(text = paste("trips_purchases_",i,"_20P1[,c(2,5)]", sep = ""))))
+assign(paste("household_store_",i, sep = ""), eval(parse(text = paste("ddply(household_store_",i,",.(household_code, store_code_uc),nrow)", sep = ""))))
+assign(paste("household_store_",i, sep = ""), eval(parse(text = paste("household_store_",i,"[!(household_store_",i,"$store_code_uc==0),]", sep = ""))))
+#assign(paste("household_store_",i, sep = ""), eval(parse(text = paste("sapply(household_store_",i,",as.character)", sep = ""))))
+assign(paste("household_product_graph",i, sep = ""), eval(parse(text = paste("rbind(household_product_",i,",household_store_",i,")", sep = ""))))
+
+write.csv(household_product_2014, "~/Desktop/research/consumer data/R files/household_product_2014.csv", sep = ",", col.names = c("household_code","upc","weight"), row.names = FALSE)
+write.csv(household_store_2014, "~/Desktop/research/consumer data/R files/household_store_2014.csv", sep = ",", col.names = TRUE, row.names = FALSE)
+
+
+graph <- graph.data.frame(household_store_2014, directed = FALSE)
+E(graph)$weight <- household_store_2014$V1
+V(graph)$type <- V(graph)$name %in% household_store_2014[,1]
+
+graph <- graph.data.frame(household_product_2014, directed = FALSE)
+E(graph)$weight <- household_product_2014$V1
+V(graph)$type <- V(graph)$name %in% household_product_2014[,1]
+
+l <- layout.bipartite(graph)
+plot(graph, layout = l[, c(2,1)], vertex.color="red",vertex.size = 1,
+     edge.width = 2.5, vertex.label = NA)
+
+#############################################################################################################
+#filtering pareto products
+PP <- read.table('~/Desktop/research/consumer data/R files/zip 956 store resulotion graphs/trips_purchases_zip_956_store_8376197_2014_edgelist.tsv', header = TRUE, sep = ",")
+assign("PP", eval(parse(text = paste("PP[PP$Source %in% Products_",i,"_20P$upc_unique & PP$Target %in% Products_",i,"_20P$upc_unique,]", sep = ""))))
+PP$SourceName <- Products_2014_20P[match(PP$Source, Products_2014_20P$upc_unique),3]
+PP$TargetName <- Products_2014_20P[match(PP$Target, Products_2014_20P$upc_unique),3]
+PP$SourceName1 <- Products_2014_20P[match(PP$Source, Products_2014_20P$upc_unique),4]
+PP$TargetName1 <- Products_2014_20P[match(PP$Target, Products_2014_20P$upc_unique),4]
+PP <- PP[,c(5,6,3,4)]
+PP <- ddply(PP,.(SourceName1,TargetName1),summarise, Weight = sum(Weight))
+PP <- PP[!(PP$SourceName1==PP$TargetName1),]
+PP$Type <- "Undirected"
+colnames(PP) <- c('Source','Target','Weight','Type')
+write.csv(PP, "~/Desktop/research/consumer data/R files/PP1.csv", sep = ",", row.names = FALSE)
+
+
+
+#############################################################################################################
+#############################################################################################################
 
 gc()
 
