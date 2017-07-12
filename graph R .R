@@ -6,6 +6,10 @@ library(Rmisc)
 library(lattice)
 library(ggplot2)
 library(data.table)
+library(fitdistrplus)
+library(logspline)
+library(MASS)
+library(survival)
 
 #############################################################################################################
 #importing the files
@@ -407,20 +411,52 @@ PP <- PP[!(PP$SourceName1==PP$TargetName1),]
 PP$Type <- "Undirected"
 colnames(PP) <- c('Source','Target','Weight','Type')
 write.csv(PP, "~/Desktop/research/consumer data/R files/PP1.csv", sep = ",", row.names = FALSE)
+#############################################################################################################
+#Finding the statistics of purchasing in trips_purchases file
+#Basket size distribution
+temp <- as.data.table(trips_purchases_2014[,c(1,2,3,4,5,7,16)])
+temp2 <- temp[ , basket := .N, by = trip_code_uc]
+temp3 <- temp2[!duplicated(temp2[,1]),]
+#this will do the same as above but only keeps counts and not rows
+temp4 <- count(temp, c('trip_code_uc'))
+#plotting teh distribution
+all_stores_basket_plot =  
+  ggplot(temp3, aes(x = basket, color = household_code)) +
+  stat_ecdf() +
+  theme_bw() +
+  #theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
+  #theme(axis.title.y = element_text(size = 10)) +
+  scale_y_continuous(limits = c(0,1)) +
+  theme(legend.justification=c(0,1), legend.position=c(0,1)) +
+  scale_x_continuous(limits = c(1, 50)) +
+  xlab("Basket Size") +
+  ylab("CDF") +
+  ggtitle("Basket Size Distribution Over All Stores in 2014")
+all_stores_basket_plot
+address <- "~/Desktop/research/consumer data/plots/Basket Size Distribution Over All Stores in 2014.pdf"
+pdf(address, width=6, height=6)
+print(all_stores_basket_plot)
+dev.off()
+rm(all_stores_basket_plot)
+#check what distribution fits the data most
+temp5 <- temp3$basket
+descdist(temp5)
+fit.lognorm <- fitdist(temp5 , "lnorm")
+plot(fit.lognorm)
+fit.weibull <- fitdist(temp5 , "weibull")
+plot(fit.weibull)
+
+#number of costumers per store
 
 
+
+
+#[,list(total = sum(total_spent), num = .N), by = household_code]
 
 #############################################################################################################
 #############################################################################################################
 
 gc()
-
-
-
-
-
-
-
 
 
 
