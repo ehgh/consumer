@@ -447,10 +447,51 @@ fit.weibull <- fitdist(temp5 , "weibull")
 plot(fit.weibull)
 #############################################################################################################
 #Finding inter-trip time
+household_list <- unique(trips_2014$household_code)
+temp3 <- matrix(nrow = 0, ncol = 1)
+for (i in 1:length(household_list)){
+  if (i%%1000 == 0){
+    print(i)
+  }
+  temp <- trips_2014$purchase_date[trips_2014$household_code == household_list[i]]
+  temp2 <- strptime(sort(temp), format = "%Y-%m-%d")
+  temp3 <- rbind(temp3, as.matrix(round(diff(temp2)/86400, digits = 0)))
+}
+inter_trip_time <- as.data.frame(temp3)
+#similar code as above but faster..needs some fixing
+temp <- as.data.table(trips_2014[,c(2,3)])
+temp2 <- temp[ , inter_trip_time := round(diff(strptime(sort(purchase_date), format = "%Y-%m-%d"))/86400, digits = 0), by = household_code]
+V1 <- temp2$inter_trip_time
+inter_trip_time <- as.data.frame(V1)
+#plotting distribution
+inter_trip_time_plot =  
+  ggplot(inter_trip_time, aes(x = V1)) +
+  stat_ecdf() +
+  theme_bw() +
+  #theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
+  #theme(axis.title.y = element_text(size = 10)) +
+  scale_y_continuous(limits = c(0,1)) +
+  theme(legend.justification=c(0,1), legend.position=c(0,1)) +
+  scale_x_continuous(limits = c(1, 122)) +
+  xlab("Inter Trip Time") +
+  ylab("CDF") +
+  ggtitle("Inter Trip Time Distribution Over All Stores in 2014")
+inter_trip_time_plot
+address <- "~/Desktop/research/consumer data/plots/Inter Trip Time Distribution Over All Stores in 2014.pdf"
+pdf(address, width=6, height=6)
+print(inter_trip_time_plot)
+dev.off()
+rm(inter_trip_time_plot)
+#fit distribution to inter trip time
+inter_trip_time <- as.numeric(inter_trip_time$V1)
+descdist(inter_trip_time)
+fit.lognorm <- fitdist(inter_trip_time , "lnorm")
+plot(fit.lognorm)
+fit.weibull <- fitdist(inter_trip_time , "weibull")
+plot(fit.weibull)
 
 
 #number of costumers per store
-
 
 
 
