@@ -2,14 +2,14 @@ library(igraph)
 library(plyr)
 library(poweRlaw)
 library(grid)
-library(Rmisc)
 library(lattice)
+library(Rmisc)
 library(ggplot2)
 library(data.table)
-library(fitdistrplus)
-library(logspline)
 library(MASS)
 library(survival)
+library(fitdistrplus)
+library(logspline)
 
 #############################################################################################################
 #importing the files
@@ -21,7 +21,7 @@ for (i in 2014:2014){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/trips_" , i, ".tsv", sep = "")
   assign(paste("trips_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
-for (i in 2014:2014){
+for (i in 2013:2013){
   address <- paste("~/Desktop/research/consumer data/KiltsPanelData/nielsen_extracts 5/HMS/", i, "/Annual_Files/purchases_" , i, ".tsv", sep = "")
   assign(paste("purchases_",i, sep = ""), read.table(address, header = TRUE, sep = "\t"))
 }
@@ -428,7 +428,7 @@ all_stores_basket_plot =
   #theme(axis.title.y = element_text(size = 10)) +
   scale_y_continuous(limits = c(0,1)) +
   theme(legend.justification=c(0,1), legend.position=c(0,1)) +
-  scale_x_continuous(limits = c(1, 50)) +
+  scale_x_continuous(limits = c(1, 100)) +
   xlab("Basket Size") +
   ylab("CDF") +
   ggtitle("Basket Size Distribution Over All Stores in 2014")
@@ -439,12 +439,15 @@ print(all_stores_basket_plot)
 dev.off()
 rm(all_stores_basket_plot)
 #check what distribution fits the data most
-temp5 <- temp3$basket
+temp5 <- temp3$basket[temp3$basket<100]
 descdist(temp5)
 fit.lognorm <- fitdist(temp5 , "lnorm")
 plot(fit.lognorm)
 fit.weibull <- fitdist(temp5 , "weibull")
 plot(fit.weibull)
+#############################################################################################################
+#Finding inter-trip time
+
 
 #number of costumers per store
 
@@ -457,7 +460,6 @@ plot(fit.weibull)
 #############################################################################################################
 
 gc()
-
 
 
 
