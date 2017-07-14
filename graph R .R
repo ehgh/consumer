@@ -489,13 +489,79 @@ fit.lognorm <- fitdist(inter_trip_time , "lnorm")
 plot(fit.lognorm)
 fit.weibull <- fitdist(inter_trip_time , "weibull")
 plot(fit.weibull)
-
-
 #number of costumers per store
+temp <- as.data.table(trips_2014[trips_2014$store_code_uc != 0,])
+temp2 <- temp[ , count := .N, by = list(store_code_uc, purchase_date)]
+temp3 <- temp2[,c(3,5,10)]
+temp4 <- temp3[!duplicated(temp3),]
+count <- temp4$count
+costumers_day_store <- as.data.frame(count)
+#plotting distribution
+costumers_day_store_plot =  
+  ggplot(costumers_day_store, aes(x = count)) +
+  stat_ecdf() +
+  theme_bw() +
+  #theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
+  #theme(axis.title.y = element_text(size = 10)) +
+  scale_y_continuous(limits = c(0,1)) +
+  theme(legend.justification=c(0,1), legend.position=c(0,1)) +
+  scale_x_continuous(limits = c(1, 20)) +
+  xlab("Constumers Per Day Per Store") +
+  ylab("CDF") +
+  ggtitle("Constumers Per Day Per Store Distribution Over All Stores in 2014")
+costumers_day_store_plot
+address <- "~/Desktop/research/consumer data/plots/costumers day store Distribution Over All Stores in 2014.pdf"
+pdf(address, width=6, height=6)
+print(costumers_day_store_plot)
+dev.off()
+rm(costumers_day_store_plot)
+#fit distribution to inter trip time
+descdist(costumers_day_store$count)
+fit.lognorm <- fitdist(costumers_day_store , "lnorm")
+plot(fit.lognorm)
+fit.weibull <- fitdist(costumers_day_store$count , "weibull")
+plot(fit.weibull)
+#############################################################################################################
+#product entropy for users
+temp <- as.data.table(trips_purchases_2014)
+#temp$C <- unique(temp, by = c("household_code", "upc_unique"))
+temp2 <- temp[ , count := .N, by = list(household_code, upc_unique)]
+temp3 <- temp2[ , trip := .N, by = list(household_code, trip_code_uc)]
+temp3$frac <- temp3$count/temp3$trip
+temp4 <- temp3[!duplicated(temp3[,c(2,16)]),]
+temp5 <- temp4[ , C := .N, by = household_code]
+temp6 <- temp5[ , entropy := -sum(frac*log(frac))/log(C), by = household_code]
+temp6$entropy[is.nan(temp6$entropy)] <- 1
+temp7 <- unique(temp6, by ="household_code")
+entropy <- temp7$entropy
+costumer_product_entropy <- as.data.frame(entropy)
+#plotting distribution
+costumer_product_entropy_plot =  
+  ggplot(costumer_product_entropy, aes(x = entropy)) +
+  stat_ecdf() +
+  theme_bw() +
+  #theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
+  #theme(axis.title.y = element_text(size = 10)) +
+  scale_y_continuous(limits = c(0,1)) +
+  theme(legend.justification=c(0,1), legend.position=c(0,1)) +
+  scale_x_continuous(limits = c(1, 20)) +
+  xlab("Product Entropy") +
+  ylab("CDF") +
+  ggtitle("Constumers Product Entropy Distribution Over All Stores in 2014")
+costumer_product_entropy_plot
+address <- "~/Desktop/research/consumer data/plots/Entropy Distribution Over All Stores in 2014.pdf"
+pdf(address, width=6, height=6)
+print(costumer_product_entropy_plot)
+dev.off()
+rm(costumer_product_entropy_plot)
+#fit distribution to inter trip time
+descdist(costumer_product_entropy$entropy)
+fit.lognorm <- fitdist(costumer_product_entropy$entropy , "lnorm")
+plot(fit.lognorm)
+fit.weibull <- fitdist(costumer_product_entropy$entropy , "weibull")
+plot(fit.weibull)
 
 
-
-#[,list(total = sum(total_spent), num = .N), by = household_code]
 
 #############################################################################################################
 #############################################################################################################
