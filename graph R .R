@@ -524,32 +524,65 @@ plot(fit.weibull)
 #############################################################################################################
 #product entropy for users
 temp <- as.data.table(trips_purchases_2014)
-#temp$C <- unique(temp, by = c("household_code", "upc_unique"))
-temp2 <- temp[ , count := .N, by = list(household_code, upc_unique)]
-temp3 <- temp2[ , trip := .N, by = list(household_code, trip_code_uc)]
-temp3$frac <- temp3$count/temp3$trip
-temp4 <- temp3[!duplicated(temp3[,c(2,16)]),]
-temp5 <- temp4[ , C := .N, by = household_code]
-temp6 <- temp5[ , entropy := -sum(frac*log(frac))/log(C), by = household_code]
-temp6$entropy[is.nan(temp6$entropy)] <- 1
-temp7 <- unique(temp6, by ="household_code")
-entropy <- temp7$entropy
-costumer_product_entropy <- as.data.frame(entropy)
-#plotting distribution
-costumer_product_entropy_plot =  
-  ggplot(costumer_product_entropy, aes(x = entropy)) +
+#entropy of products in trips
+temp1 <- temp[ , count := sum(quantity), by = list(trip_code_uc, upc_unique)]
+temp1_1 <- temp1[ , countTotal := sum(quantity), by = list(trip_code_uc)]
+temp1_2 <- temp1_1[!duplicated(temp1_1[,c(1,16)]),]
+temp1_3 <- temp1_2[ , C := .N, by = trip_code_uc]
+temp1_3$frac <- temp1_3$count/temp1_3$countTotal
+temp1_4 <- temp1_3[ , entropy := -sum(frac*log(frac))/log(C), by = trip_code_uc]
+temp1_4_sample <- temp1_4[1:100,]
+temp1_5 <- temp1_4[!duplicated(temp1_4[,1]),]
+temp1_5$entropy[is.nan(temp1_5$entropy)] <- 0
+temp1_5$entropy[temp1_5$entropy>1] <- 1
+#plot trip entropy distribution
+trip_entropy =
+  ggplot(temp1_5, aes(x = entropy)) +
   stat_ecdf() +
   theme_bw() +
   #theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
   #theme(axis.title.y = element_text(size = 10)) +
   scale_y_continuous(limits = c(0,1)) +
   theme(legend.justification=c(0,1), legend.position=c(0,1)) +
-  scale_x_continuous(limits = c(1, 20)) +
+  scale_x_continuous(limits = c(0, 1)) +
+  xlab("Trip Entropy") +
+  ylab("CDF") +
+  ggtitle("Trip Entropy Distribution Over All Trips in 2014")
+trip_entropy
+address <- "~/Desktop/research/consumer data/plots/Trip Entropy Distribution Over All Trips in 2014.pdf"
+pdf(address, width=6, height=6)
+print(trip_entropy)
+dev.off()
+rm(trip_entropy)
+#product distribution KL Difference from uniform for each household
+
+#product entropy
+temp2 <- temp[ , count := sum(quantity), by = list(household_code, trip_code_uc, upc_unique)]
+temp2_1 <- temp2[ , productCountTotal := sum(quantity), by = list(household_code, upc_unique)]
+temp2_1$frac <- temp2_1$count/temp2_1$productCountTotal
+temp2_2 <- temp2_1[(!duplicated(temp2_1[,c(1,2,17)])) & count != 0 ,]
+temp2_3 <- temp2_2[ , entropy := -sum(frac*log(frac)), by = list(household_code, upc_unique)]
+temp2_4 <- temp2_3[ , productEntropy := mean(entropy), by = upc_unique]
+temp2_5 <- temp2_4[!duplicated(temp2_4[,16]) ,]
+
+
+View(temp2_4[1:20,])
+
+#plotting distribution
+costumer_product_entropy_plot =  
+  ggplot(temp2_5, aes(x = productEntropy)) +
+  stat_ecdf() +
+  theme_bw() +
+  #theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
+  #theme(axis.title.y = element_text(size = 10)) +
+  scale_y_continuous(limits = c(0,1)) +
+  theme(legend.justification=c(0,1), legend.position=c(0,1)) +
+  scale_x_continuous(limits = c(0, 1)) +
   xlab("Product Entropy") +
   ylab("CDF") +
   ggtitle("Constumers Product Entropy Distribution Over All Stores in 2014")
 costumer_product_entropy_plot
-address <- "~/Desktop/research/consumer data/plots/Entropy Distribution Over All Stores in 2014.pdf"
+address <- "~/Desktop/research/consumer data/plots/product Entropy Distribution Over All Stores in 2014.pdf"
 pdf(address, width=6, height=6)
 print(costumer_product_entropy_plot)
 dev.off()
@@ -561,6 +594,87 @@ plot(fit.lognorm)
 fit.weibull <- fitdist(costumer_product_entropy$entropy , "weibull")
 plot(fit.weibull)
 
+#product store entropy
+temp2 <- temp[ , count := sum(quantity), by = list(household_code, store_code_uc, upc_unique)]
+temp2_1 <- temp2[ , productCountTotal := sum(quantity), by = list(household_code, upc_unique)]
+temp2_1$frac <- temp2_1$count/temp2_1$productCountTotal
+temp2_2 <- temp2_1[(!duplicated(temp2_1[,c(2,5,16)])) & count != 0 ,]
+temp2_3 <- temp2_2[ , entropy := -sum(frac*log(frac)), by = list(household_code, upc_unique)]
+temp2_4 <- temp2_3[ , productEntropy := mean(entropy), by = upc_unique]
+temp2_5 <- temp2_4[!duplicated(temp2_4[,16]) ,]
+
+
+View(temp2_4[1:20,])
+
+#plotting distribution
+costumer_product_store_entropy_plot =  
+  ggplot(temp2_5, aes(x = productEntropy)) +
+  stat_ecdf() +
+  theme_bw() +
+  #theme(axis.text.x = element_text(size = 7.5, angle = 45,  vjust=1, hjust=1)) +
+  #theme(axis.title.y = element_text(size = 10)) +
+  scale_y_continuous(limits = c(0,1)) +
+  theme(legend.justification=c(0,1), legend.position=c(0,1)) +
+  scale_x_continuous(limits = c(0, 1)) +
+  xlab("Product Entropy") +
+  ylab("CDF") +
+  ggtitle("Constumers Product Per Store Entropy Distribution Over All Stores in 2014")
+costumer_product_store_entropy_plot
+address <- "~/Desktop/research/consumer data/plots/store product Entropy Distribution Over All Stores in 2014.pdf"
+pdf(address, width=6, height=6)
+print(costumer_product_store_entropy_plot)
+dev.off()
+rm(costumer_product_store_entropy_plot)
+
+
+#fit distribution to inter trip time
+descdist(costumer_product_entropy$entropy)
+fit.lognorm <- fitdist(costumer_product_entropy$entropy , "lnorm")
+plot(fit.lognorm)
+fit.weibull <- fitdist(costumer_product_entropy$entropy , "weibull")
+plot(fit.weibull)
+
+
+#############################################################################################################
+#scanner data for store code 4559094
+#sales per product
+address <- "~/Desktop/research/consumer data/R files/zip 956 store resulotion graphs/trips_purchases_zip_956_store_4559094_2014_edgelist.tsv"
+store_49 <- read.table(address, header = TRUE, sep = ",")
+store_49_G <- graph.data.frame(store_49, directed = FALSE)
+vcount(store_49_G)
+sum(store_49$Weight)
+address <- "~/Desktop/research/consumer data/R files/Full_Store_Code_4559094 (Retail_Scanner).tsv"
+store_49_S <- read.table(address, header = TRUE, sep = "\t")
+length(unique(store_49_S$upc))
+store_49_S <- as.data.table(store_49_S)
+store_49_S_1 <- store_49_S[ , count := .N, by = week_end]
+store_49_S_1$count <- store_49_S_1$count/vcount(store_49_G)
+store_49_S_1 <- store_49_S_1[!duplicated(store_49_S_1[,3]) ,]
+costumer_product_entropy_plot =  
+  ggplot(store_49_S_1, aes(x = week_end, y = count)) +
+  geom_point() +
+  theme_bw() +
+  scale_y_continuous(limits = c(0,1)) +
+  theme(legend.justification=c(0,1), legend.position=c(0,1)) +
+  scale_x_continuous(limits = c(20140101, 20141231)) +
+  xlab("Week end") +
+  ylab("CDF") +
+  ggtitle("sales by weeks of 2014")
+costumer_product_entropy_plot
+address <- "~/Desktop/research/consumer data/plots/Fraction of products sold by weeks of 20141.pdf"
+pdf(address, width=6, height=6)
+print(costumer_product_entropy_plot)
+dev.off()
+rm(costumer_product_entropy_plot)
+#############################################################################################################
+temp <- as.data.table(store_49_S)
+
+temp <- temp[, count:= .N, by= upc]
+temp <- temp[!duplicated(temp$upc),]
+temp <- temp[count == 1,]
+plot(table(temp$week_end))
+list <- temp$upc[temp$week_end == 20140705]
+temp_2 <- products[products$upc %in% list,]
 
 
 #############################################################################################################
@@ -569,7 +683,13 @@ plot(fit.weibull)
 gc()
 
 
+temp <- as.data.table(purchases_2014)
+temp2 <- temp5[, count:= .N, by = list(trip_code_uc, upc, upc_ver_uc)]
+temp3 <- table(temp2$count)
+temp3
+temp2[temp2$count==49,2]
+products[products$upc == 7980199470,]
+length(which(products$product_module_code>445 & products$product_module_code<468))
 
-
-
-
+temp4 <- products$upc[which(products$product_module_code>445 & products$product_module_code<468 | products$product_module_code==750)]
+temp5 <- temp[!(temp$upc %in% temp4),]
