@@ -10,6 +10,7 @@ library(MASS)
 library(survival)
 library(fitdistrplus)
 library(logspline)
+library(stringi)
 
 #############################################################################################################
 #importing the files
@@ -54,7 +55,7 @@ average_productPerTrip <- mean(temp$Freq)
 #creating products graph
 #remove NA store_zip3 rows
 listname <- paste("trips_purchases_zip_", i, sep = "")
-assign(listname, eval(parse(text = paste("trips_purchases_data_",i,"[!is.na(trips_purchases_data_",i,"$store_zip3),]", sep = ""))))
+assign(listname, eval(parse(text = paste("trips_purchases_",i,"[!is.na(trips_purchases_",i,"$store_zip3),]", sep = ""))))
 #filter a specific zipcode
 for (zip in 956){
   listname <- paste("trips_purchases_zip_",zip,"_", i, sep = "")
@@ -64,6 +65,7 @@ for (zip in 956){
 #separating list based on store_code_uc
 listname <- paste("trips_purchases_zip_",zip,"_", i,"$store_code_uc", sep = "")
 store_code_list <- unique(eval(parse(text = listname)))
+store_code_list <- unique(trips_purchases_zip_2014$store_code_uc[trips_purchases_zip_2014$store_zip3 == 956])
 for (store_code in store_code_list[1]){
   if (which(store_code_list == store_code)%%10 == 0){
     print(store_code)
@@ -307,8 +309,8 @@ w[,c(9,10)]
 #importing the graphs
 #importing the files
 store_list_graph_stat <- as.data.frame(store_code_list[1:215])
-#for (i in store_code_list[1:215]){
-for (i in c(2073128)){
+for (i in store_code_list[1:215]){
+#for (i in c(2073128)){
   address <- paste("~/Desktop/research/consumer data/R files/zip 956 store resulotion graphs/trips_purchases_zip_956_store_", i, "_2014_edgelist.tsv" , sep = "")
   assign(paste("trips_purchases_zip_956_store_", i, "_2014_edgelist", sep = ""), read.table(address, header = TRUE, sep = ","))
   assign(paste("trips_purchases_zip_956_store_", i, "_2014_edgelist", sep = ""), as.data.frame(eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_edgelist[,1:3]", sep = "")))))
@@ -318,14 +320,30 @@ for (i in c(2073128)){
   store_list_graph_stat$edges[store_list_graph_stat$store_code_list == i] = ecount(eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = ""))))
   store_list_graph_stat$diff[store_list_graph_stat$store_code_list == i] = ecount(difference(trips_purchases_zip_956_store_821690_2014_graph,eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = "")))))/17283
 }
+####### watch out !!!!!!!
+#removing the graph objects created
+for (i in store_code_list[1:215]){
+  rm(list = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = ""))
+}
 
+#edge count of pairwise difference graph and pairwise common nodes of graphs
 store_list_graph_stat_all <- matrix(nrow = 215, ncol = 215)
+store_list_graph_stat_node <- matrix(nrow = 215, ncol = 215)
+
 for(i in 1:215){
   for(j in c(1:215)){
-    store_list_graph_stat_all[i,j] = ecount(difference(eval(parse(text = paste("trips_purchases_zip_956_store_", store_code_list[i], "_2014_graph", sep = ""))),eval(parse(text = paste("trips_purchases_zip_956_store_", store_code_list[j], "_2014_graph", sep = "")))))/store_list_graph_stat$edges[i]
+    store_list_graph_stat_node[i,j] = length(intersect(eval(parse(text = paste("vertex_attr(trips_purchases_zip_956_store_", store_code_list[i], "_2014_graph)$name", sep = ""))),eval(parse(text = paste("vertex_attr(trips_purchases_zip_956_store_", store_code_list[j], "_2014_graph)$name", sep = "")))))/store_list_graph_stat$vertices[i]
+    #store_list_graph_stat_all[i,j] = ecount(difference(eval(parse(text = paste("trips_purchases_zip_956_store_", store_code_list[i], "_2014_graph", sep = ""))),eval(parse(text = paste("trips_purchases_zip_956_store_", store_code_list[j], "_2014_graph", sep = "")))))/store_list_graph_stat$edges[i]
   }
   print(i)
 }
+
+temp <- which(store_list_graph_stat_node > 0.5 & store_list_graph_stat_node < 0.6 , arr.ind = T)
+temp2 <- which(store_list_graph_stat$vertices[temp] > 200)
+
+write.table(as.data.table(store_list_graph_stat_node), "~/Desktop/research/consumer data/R files/store_list_graph_stat_node.tsv", sep = ",", col.names = FALSE, row.names = FALSE)
+temp <- read.table("~/Desktop/research/consumer data/R files/store_list_graph_stat_all.tsv", sep = ",", header = FALSE)
+
 store_list_graph_CC <- matrix(nrow = 215, ncol = 1)
 
 for(j in c(1:215)){
@@ -668,15 +686,80 @@ dev.off()
 rm(costumer_product_entropy_plot)
 #############################################################################################################
 temp <- as.data.table(store_49_S)
-
+temp <- merge(temp, products, by.x = "upc", by.y = "upc", all.x = FALSE, all.y = FALSE)
+#histogram of the number of weeks per year every product module has been sold 
+temp <- temp[!duplicated(temp[,c(3,11)]),]
+temp <- temp[, count:= .N, by= product_module_code]
+temp <- temp[!duplicated(temp$product_module_code),]
+length(unique(temp$product_module_code))
+#remove 'VIDEO PRODUCTS PRERECORDED' and 'MAGAZINES SELECTED TITLES' 
+temp <- temp[!(temp$product_module_code %in% c(8900,8902)),]
+plot(table(temp$count))
+#histogram of weeks that modules with low number of week sales has been sold during those weeks
+temp1 <- temp[count < 10,]
+plot(table(temp1$week_end))
+list <- temp1$upc[temp1$week_end == 20140104]
+temp_2 <- products[products$upc %in% list,]
+#histogram of the number of weeks per year every product upc has been sold 
+temp <- as.data.table(store_49_S)
+temp <- merge(temp, products, by.x = "upc", by.y = "upc", all.x = FALSE, all.y = FALSE)
+temp <- temp[!duplicated(temp[,c(1,3)]),]
 temp <- temp[, count:= .N, by= upc]
 temp <- temp[!duplicated(temp$upc),]
-temp <- temp[count == 1,]
-plot(table(temp$week_end))
-list <- temp$upc[temp$week_end == 20140705]
-temp_2 <- products[products$upc %in% list,]
+length(unique(temp$upc))
+plot(table(temp$count))
+#histogram of weeks that modules with low number of week sales has been sold during those weeks
+temp1 <- temp[count < 2,]
+plot(table(temp1$week_end))
+#convert weekend to date
+temp <- transform(temp, week_end = as.Date(as.character(week_end), "%Y%m%d"))
+temp <- temp[, window:= max(week_end)-min(week_end), by= upc]
+temp <- temp[, start:= min(week_end), by= upc]
+store_49_S_1 <- temp
+temp<- store_49_S_1
+temp <- temp[!duplicated(temp$upc),]
+plot(table(temp$start))
+plot(temp$start, temp$window)
+costumer_product_entropy_plot =  
+  ggplot(temp, aes(x = start, y = window)) +
+  geom_point() +
+  theme_bw() +
+  #scale_y_continuous(limits = c(0,1)) +
+  theme(legend.justification=c(0,1), legend.position=c(0,1)) +
+  #scale_x_continuous(limits = c(20140101, 20141231)) +
+  xlab("Week end") +
+  ylab("CDF") +
+  ggtitle("sales by weeks of 2014")
+costumer_product_entropy_plot
+address <- "~/Desktop/research/consumer data/problem statement/Images/f4.pdf"
+pdf(address, width=6, height=6)
+print(costumer_product_entropy_plot)
+dev.off()
+rm(costumer_product_entropy_plot)
 
+#############################################################################################################
+#creating the sales file for a store from the list of files that includes sales of that store in scanner dataset
+temp <- read.table("~/Desktop/research/consumer data/R files/scanner data/store_code_4559094/file_names.txt", header = FALSE)
+temp[] <- lapply(temp, as.character)
+index <- which(nchar(temp$V1) == 93)
+temp$V1[index] <- gsub('^(.{79})(.*)$', '\\1aaa\\2', temp$V1[index])
+file_names <- sapply(temp, substring, 84, 96)
+store_code_4559094 <- data.frame()
+for (i in 1:length(file_names)){
+  address <- paste("~/Desktop/research/consumer data/R files/scanner data/store_code_4559094/Ehsan/",file_names[i], sep = "")
+  temp <- read.table(address, header = FALSE, col.names = c("store_code_uc","upc","week_end","units","prmult","price"))
+  store_code_4559094 <- rbind(store_code_4559094, temp)
+  
+}
 
+#############################################################################################################
+#scanner data 
+#import stores data
+stores_2014 <- read.table("scanner data/stores_2014.tsv", header = TRUE, sep = "\t")
+#list of stores in California
+cal_stores <- unique(stores_2014$store_code_uc[which(stores_2014$store_zip3 > 899 & stores_2014$store_zip3 < 962)])
+write.table(cal_stores, "scanner data/cal_stores.tsv", col.names = FALSE, row.names = FALSE)
+#############################################################################################################
 #############################################################################################################
 #############################################################################################################
 
