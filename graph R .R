@@ -61,6 +61,38 @@ for (zip in 956){
   listname <- paste("trips_purchases_zip_",zip,"_", i, sep = "")
   assign(listname, eval(parse(text = paste("trips_purchases_zip_",i,"[trips_purchases_zip_",i,"$store_zip3 == ", zip, ",]", sep = ""))))
 }
+##filter stores in california
+#trips_purchases_2014_cal <- trips_purchases_zip_2014[trips_purchases_zip_2014$store_zip3 > 899 & trips_purchases_zip_2014$store_zip3 < 962, ]
+#filter stores in california with existing sales info
+trips_purchases_2014_cal <- trips_purchases_zip_2014[trips_purchases_zip_2014$store_code_uc %in% cal_stores , ]
+#removing stores with less than N products in their purchasing graph
+temp <- trips_purchases_2014_cal
+temp <- temp[!duplicated(temp[,c("store_code_uc","upc_unique")]),]
+temp <- as.data.table(temp)
+temp <- temp[, count:= .N, by = store_code_uc]
+list <- unique(temp$store_code_uc[temp$count > 1000])
+trips_purchases_2014_cal_2 <- trips_purchases_2014_cal[trips_purchases_2014_cal$store_code_uc %in% list, ]
+#counting the number of common products between stores in purchasing behavior
+#listing the products of each store
+store_product_list_cal = list()
+for (i in 1:length(list)){
+  temp_2 <- unique(trips_purchases_2014_cal_2$upc_unique[trips_purchases_2014_cal_2$store_code_uc == list[i]])
+  store_product_list_cal <- c(store_product_list_cal, list(temp_2))
+  print(i)
+}
+#filtering stores with common products more than 500
+temp <- matrix(nrow = 0, ncol = 7)
+for (i in 1:length(list)){
+  for (j in (i+1):length(list)){
+    if(i != j){
+      k <- length(intersect(store_product_list_cal[[i]],store_product_list_cal[[j]]))
+      if (k > 500){
+        temp <- rbind(temp, c(i,j,k, list[i], list[j], length(store_product_list_cal[[i]]), length(store_product_list_cal[[j]])))
+      }
+    }
+  }
+  print(i)
+}
 #############################################################################################################
 #separating list based on store_code_uc
 listname <- paste("trips_purchases_zip_",zip,"_", i,"$store_code_uc", sep = "")
@@ -320,11 +352,13 @@ for (i in store_code_list[1:215]){
   store_list_graph_stat$edges[store_list_graph_stat$store_code_list == i] = ecount(eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = ""))))
   store_list_graph_stat$diff[store_list_graph_stat$store_code_list == i] = ecount(difference(trips_purchases_zip_956_store_821690_2014_graph,eval(parse(text = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = "")))))/17283
 }
-####### watch out !!!!!!!
+####### watch out !!!!!!! this will erase graph objects
 #removing the graph objects created
 for (i in store_code_list[1:215]){
   rm(list = paste("trips_purchases_zip_956_store_", i, "_2014_graph", sep = ""))
 }
+
+store_code_list_with_salesNgraph <- store_code_list[store_code_list %in% cal_stores]
 
 #edge count of pairwise difference graph and pairwise common nodes of graphs
 store_list_graph_stat_all <- matrix(nrow = 215, ncol = 215)
@@ -338,8 +372,17 @@ for(i in 1:215){
   print(i)
 }
 
+#finding stores with large common products in the graph
 temp <- which(store_list_graph_stat_node > 0.5 & store_list_graph_stat_node < 0.6 , arr.ind = T)
-temp2 <- which(store_list_graph_stat$vertices[temp] > 200)
+temp <- as.data.frame(temp)
+#adding the size and store code of graphs as new columns to temp
+temp$vertice1 <- store_list_graph_stat$vertices[temp$row] 
+temp$vertice2 <- store_list_graph_stat$vertices[temp$col] 
+temp$storecode1 <- store_list_graph_stat$`store_code_list[1:215]`[temp$row] 
+temp$storecode2 <- store_list_graph_stat$`store_code_list[1:215]`[temp$col] 
+temp <- temp[temp$storecode1 %in% store_code_list_with_salesNgraph,]
+temp <- temp[temp$storecode2 %in% store_code_list_with_salesNgraph,]
+temp2 <- temp[temp[,c(3,4)] > 12,]
 
 write.table(as.data.table(store_list_graph_stat_node), "~/Desktop/research/consumer data/R files/store_list_graph_stat_node.tsv", sep = ",", col.names = FALSE, row.names = FALSE)
 temp <- read.table("~/Desktop/research/consumer data/R files/store_list_graph_stat_all.tsv", sep = ",", header = FALSE)
@@ -758,6 +801,7 @@ for (i in 1:length(file_names)){
 stores_2014 <- read.table("scanner data/stores_2014.tsv", header = TRUE, sep = "\t")
 #list of stores in California
 cal_stores <- unique(stores_2014$store_code_uc[which(stores_2014$store_zip3 > 899 & stores_2014$store_zip3 < 962)])
+cal_stores <- cal_stores[1]
 write.table(cal_stores, "scanner data/cal_stores.tsv", col.names = FALSE, row.names = FALSE)
 #############################################################################################################
 #############################################################################################################
